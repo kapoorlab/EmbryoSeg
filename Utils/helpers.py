@@ -51,11 +51,32 @@ from scipy.ndimage.filters import median_filter, gaussian_filter, maximum_filter
 from skimage.filters import sobel
 from skimage.measure import label
 from scipy import spatial
+from csbdeep.utils import normalize
 
   
 
 
+def zero_pad(image, PadX, PadY):
 
+          sizeY = image.shape[1]
+          sizeX = image.shape[0]
+          
+          sizeXextend = sizeX
+          sizeYextend = sizeY
+         
+ 
+          while sizeXextend%PadX!=0:
+              sizeXextend = sizeXextend + 1
+        
+          while sizeYextend%PadY!=0:
+              sizeYextend = sizeYextend + 1
+
+          extendimage = np.zeros([sizeXextend, sizeYextend])
+          
+          extendimage[0:sizeX, 0:sizeY] = image
+              
+              
+          return extendimage 
 def _fill_label_holes(lbl_img, **kwargs):
     lbl_img_filled = np.zeros_like(lbl_img)
     for l in (set(np.unique(lbl_img)) - set([0])):
@@ -318,12 +339,11 @@ def SmartSeedPredictionSliced(ImageDir, SaveDir, fname, UnetModel, StarModel, No
                     TimeStarImage[i,:] = StarImage
         
                     multiplot(smallimage, Mask, SmartSeeds, "Image", "UNET", "SmartSeeds")  
-            doubleplot(smallimage, Mask, "Image", "UNET")  
+             
 
     if NoiseModel is not None:
                 Path(DenoisedResults).mkdir(exist_ok = True)
                 imwrite((DenoisedResults + Name + '.tif' ) , image.astype('float32'))       
-    TimeMask = DownsampleData(TimeMask, 1.0/DownsampleFactor)
     
     if StarModel is not None: 
         TimeSmartSeeds = relabel_sequential(TimeSmartSeeds)[0]
