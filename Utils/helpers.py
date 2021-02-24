@@ -13,10 +13,10 @@ import os
 from tqdm import tqdm
 import collections
 import glob
+import cv2
 from tifffile import imread, imwrite
 import warnings
 from skimage.morphology import erosion, dilation, square
-from scipy.ndimage.interpolation import zoom
 from skimage.morphology import skeletonize
 from skimage.filters import gaussian
 from six.moves import reduce
@@ -214,7 +214,7 @@ def RelabelZ(previousImage, currentImage,threshold):
 
 
  
-def STARPrediction(image, model, min_size, n_tiles, MaskImage = None, smartcorrection = None, UseProbability = True):
+def STARPrediction(image, model, min_size, n_tiles, MaskImage = None, smartcorrection = None):
     
     print('Applying StarDist prediction')
     
@@ -225,43 +225,40 @@ def STARPrediction(image, model, min_size, n_tiles, MaskImage = None, smartcorre
     MidImage, details = model.predict_instances(image, n_tiles = n_tiles)
     
     StarImage = MidImage[:shape[0],:shape[1]]
+    StarImage = remove_small_objects(StarImage.astype('uint16'), min_size = min_size)
     
     SmallProbability, SmallDistance = model.predict(image, n_tiles = n_tiles)
     grid = model.config.grid
-    Probability = zoom(SmallProbability, ( grid[0] , grid[1] ))
+    Probability = cv2.resize(SmallProbability, dsize=(SmallProbability.shape[1] * grid[1] , SmallProbability.shape[0] * grid[0] ))
     Distance = MaxProjectDist(SmallDistance, axis=-1)
-    Distance = zoom(Distance, ( grid[0] , grid[1] ))
-    if UseProbability:
+    Distance = cv2.resize(Distance, dsize=(Distance.shape[1] * grid[1] , Distance.shape[0] * grid[0] ))
+    #zoom(Distance, ( grid[0] , grid[1] ))
+    MaxProjectDistance = (Distance[:shape[0],:shape[1]])
+   
         
-        MaxProjectDistance = Probability[:shape[0],:shape[1]]
-
-    else:
-        
-        MaxProjectDistance = Distance[:shape[0],:shape[1]]
-
-    if MaskImage is not None:
-        
-       if smartcorrection is None: 
+    if smartcorrection is None: 
           
           Watershed, Markers = WatershedwithMask(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid)
           Watershed = fill_label_holes(Watershed.astype('uint16'))
     
-       if smartcorrection is not None:
+    if smartcorrection is not None:
            
           Watershed, Markers = WatershedSmartCorrection(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid, smartcorrection = smartcorrection)
           Watershed = fill_label_holes(Watershed.astype('uint16'))   
 
-    if MaskImage is None:
 
-         Watershed, Markers = WatershedNOMask(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), grid)
-         Watershed = fill_label_holes(Watershed.astype('uint16'))
+    if len(image.shape) > 2:
+        
+        for i in range(0, Watershed.shape[0]):
+            
+            Watershed[i,:] = remove_small_objects(Watershed[i,:].astype('uint16'), min_size = min_size)
+            
+    else:
+        
+        Watershed = remove_small_objects(Watershed.astype('uint16'), min_size = min_size)
 
-    Watershed = remove_small_objects(Watershed.astype('uint16'), min_size = min_size)
- 
-    
 
-
-    return Watershed, Markers, StarImage     
+    return Watershed, Markers, StarImage,MaxProjectDistance     
 
 
 def UNETPrediction(image, model, min_size, n_tiles, axis, threshold = 20):
@@ -276,86 +273,57 @@ def UNETPrediction(image, model, min_size, n_tiles, axis, threshold = 20):
     Filled = binary_fill_holes(Binary)
     Finalimage = label(Filled)
     Finalimage = fill_label_holes(Finalimage)
+    
     if len(image.shape) == 2:
-        Finalimage = remove_small_objects(Finalimage.astype('uint16'), min_size = min_size)
+        try:
+           Finalimage = remove_small_objects(Finalimage.astype('uint16'), min_size = min_size)
+        except:
+           pass 
     if len(image.shape) > 2:
         for i in range(0, Finalimage.shape[0]):
             Finalimage[i,:] = remove_small_objects(label(Finalimage[i,:]).astype('uint16'), min_size = min_size)
+            
     Finalimage = relabel_sequential(Finalimage)[0]
-    #Stitch 2D slices using relabel function
-    #if len(image.shape) > 2:
-           #Finalimage = merge_labels_across_volume(Finalimage.astype('uint16'), RelabelZ, threshold= threshold)
     return Finalimage        
 
-def SmartSeedPredictionSliced(ImageDir, SaveDir, fname, UnetModel, StarModel, NoiseModel = None, min_size_mask = 100, min_size = 100, 
-                              n_tiles = (2,2), doMask = True, smartcorrection = None, threshold = 20, masklinkthreshold = 100, UseProbability = True, filtersize = 0):
+def EmbryoSegFunction(ImageDir, SaveDir, fname, UnetModel, StarModel,  min_size_mask = 100, min_size = 100, 
+                              n_tiles = (2,2),  smartcorrection = None, threshold = 20, masklinkthreshold = 100, filtersize = 0):
     
     
     print('Generating SmartSeed results')
     UNETResults = SaveDir + 'BinaryMask/'
-    DenoisedResults = SaveDir + 'Denoised/'
     StarImageResults = SaveDir + 'StarDistMask/'
     SmartSeedsResults = SaveDir + 'SmartSeedsMask/' 
     Path(SaveDir).mkdir(exist_ok = True)
-    if StarModel is not None:
-       Path(SmartSeedsResults).mkdir(exist_ok = True)
-       Path(StarImageResults).mkdir(exist_ok = True)
+    Path(SmartSeedsResults).mkdir(exist_ok = True)
+    Path(StarImageResults).mkdir(exist_ok = True)
     Path(UNETResults).mkdir(exist_ok = True)
     #Read Image
     Name = os.path.basename(os.path.splitext(fname)[0])
     image = imread(fname)
-    
-    
-    if NoiseModel is not None:
-                
-                print('Denoising Image')
-                image = NoiseModel.predict(image,'ZYX')
-                
     TimeSmartSeeds = np.zeros([image.shape[0], image.shape[1], image.shape[2]], dtype='uint16')
     TimeStarImage = np.zeros([image.shape[0], image.shape[1], image.shape[2]], dtype='uint16')
     TimeMask = np.zeros([image.shape[0], image.shape[1], image.shape[2]], dtype = 'uint16')
-    
     
     for i in range(0, image.shape[0]):
         
             smallimage = image[i,:]
             Mask = UNETPrediction(gaussian_filter(smallimage, filtersize), UnetModel, min_size_mask, n_tiles, 'YX')
             TimeMask[i,:] = Mask
-            if doMask:
-                
-                  if StarModel is not None:
-                     SmartSeeds, _, StarImage = STARPrediction(gaussian_filter(smallimage, filtersize), StarModel, min_size, n_tiles, MaskImage = Mask, smartcorrection = smartcorrection, UseProbability = UseProbability)
-                     TimeSmartSeeds[i,:] = SmartSeeds
-                     TimeStarImage[i,:] = StarImage
-                     multiplot(smallimage, Mask, SmartSeeds, "Image", "UNET", "SmartSeeds")  
-
-                           
-         
-            if doMask == False:
-                
-                if StarModel is not None:
-                    SmartSeeds, _, StarImage = STARPrediction(gaussian_filter(smallimage, filtersize), StarModel, min_size, n_tiles, UseProbability = UseProbability)
-                    TimeSmartSeeds[i,:] = SmartSeeds
-                    TimeStarImage[i,:] = StarImage
-        
-                    multiplot(smallimage, Mask, SmartSeeds, "Image", "UNET", "SmartSeeds")  
-             
-
-    if NoiseModel is not None:
-                Path(DenoisedResults).mkdir(exist_ok = True)
-                imwrite((DenoisedResults + Name + '.tif' ) , image.astype('float32'))       
-    
-    if StarModel is not None: 
-        TimeSmartSeeds = relabel_sequential(TimeSmartSeeds)[0]
-        TimeStarImage = relabel_sequential(TimeStarImage)[0]
-        TimeSmartSeeds = merge_labels_across_volume(TimeSmartSeeds.astype('uint16'), RelabelZ, threshold = threshold)    
-        TimeStarImage = merge_labels_across_volume(TimeStarImage.astype('uint16'), RelabelZ, threshold = threshold)  
+            SmartSeeds, _, StarImage,MaxProjectDistance = STARPrediction(gaussian_filter(smallimage, filtersize), StarModel, min_size, n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
+            TimeSmartSeeds[i,:] = SmartSeeds
+            TimeStarImage[i,:] = StarImage
+            multiplot(smallimage, StarImage, SmartSeeds, "Image", "StarDist", "SmartSeeds")  
+    TimeSmartSeeds = relabel_sequential(TimeSmartSeeds)[0]
+    TimeStarImage = relabel_sequential(TimeStarImage)[0]
+    TimeSmartSeeds = merge_labels_across_volume(TimeSmartSeeds.astype('uint16'), RelabelZ, threshold = threshold)    
+    TimeStarImage = merge_labels_across_volume(TimeStarImage.astype('uint16'), RelabelZ, threshold = threshold)  
     TimeMask = relabel_sequential(TimeMask)[0]    
     TimeMask = merge_labels_across_volume(TimeMask.astype('uint16'), RelabelZ, threshold = masklinkthreshold)  
       
-    if StarModel is not None:  
-        imwrite((SmartSeedsResults + Name+ '.tif' ) , TimeSmartSeeds.astype('uint16'))
-        imwrite((StarImageResults + Name+ '.tif' ) , TimeStarImage.astype('uint16'))
+      
+    imwrite((SmartSeedsResults + Name+ '.tif' ) , TimeSmartSeeds.astype('uint16'))
+    imwrite((StarImageResults + Name+ '.tif' ) , TimeStarImage.astype('uint16'))
     imwrite((UNETResults + Name+ '.tif' ) , TimeMask.astype('uint16'))       
     
              
@@ -383,8 +351,8 @@ def WatershedwithMask(Image, Label,mask, grid):
     markers_raw[tuple(coordinates_int.T)] = 1 + np.arange(len(Coordinates))
     
     markers = morphology.dilation(markers_raw, morphology.disk(2))
-    #Image = sobel(Image)
-    watershedImage = watershed(-Image, markers, mask = mask.copy())
+    Image = sobel(Image)
+    watershedImage = watershed(Image, markers, mask = mask.copy())
     
     return watershedImage, markers  
 
@@ -399,8 +367,13 @@ def WatershedSmartCorrection(Image, Label, mask, grid, smartcorrection = 20, max
     
    
     CopyDist = Image.copy()
-    thresh = threshold_otsu(CopyDist)
-    CopyDist = CopyDist > thresh
+    try:
+      thresh = threshold_otsu(CopyDist)
+      CopyDist = CopyDist > thresh
+        
+    except:
+        
+        CopyDist = CopyDist > 0
 
 
     ## Use markers from Label image
@@ -416,19 +389,15 @@ def WatershedSmartCorrection(Image, Label, mask, grid, smartcorrection = 20, max
     if(len(LabelCoordinates) > 0) :
      Labelmarkers_raw[tuple(Labelcoordinates_int.T)] = 1 + np.arange(len(LabelCoordinates))
      Labelmarkers = morphology.dilation(Labelmarkers_raw, morphology.disk(5))
-  
-
    
     Image = sobel(Image)
 
-
     watershedImage = watershed(Image, markers = Labelmarkers)
-    
+
     watershedImage[thin(CopyDist, max_iter = smartcorrection//2) == 0] = 0
     sexyImage = watershedImage
     copymask = mask.copy()
-    
-    Binary = watershedImage > 0
+    Binary = watershedImage > 1
    
     if smartcorrection > 0:
        indices = list(zip(*np.where(Binary>0)))
@@ -439,7 +408,7 @@ def WatershedSmartCorrection(Image, Label, mask, grid, smartcorrection = 20, max
         maskindices = list(zip(*((np.where(copymask>0)))))
         maskindices = np.asarray(maskindices)
     
-        for i in (range(0,maskindices.shape[0])):
+        for i in tqdm(range(0,maskindices.shape[0])):
     
            pt = maskindices[i]
            closest =  tree.query(pt)
@@ -447,63 +416,10 @@ def WatershedSmartCorrection(Image, Label, mask, grid, smartcorrection = 20, max
            if closest[0] < smartcorrection:
                sexyImage[pt[0], pt[1]] = watershedImage[indices[closest[1]][0], indices[closest[1]][1]]  
        
-    sexyImage = remove_small_objects(sexyImage.astype('uint16'), min_size = min_size)
     sexyImage = fill_label_holes(sexyImage)
     sexyImage, forward_map, inverse_map = relabel_sequential(sexyImage)
-    
     
     return sexyImage, Labelmarkers  
-
-
-
-
-
-def WatershedDistanceMarker(Image, Label, mask, grid, smartcorrection, max_size = 100000, min_size = 1):
-    
-    
-   
-    CopyDist = Image.copy()
-    thresh = threshold_otsu(CopyDist)
-    CopyDist = CopyDist > thresh
-    ThinCopyDist = thin(CopyDist, max_iter = 5)
-  
-    ThinCopyDist = CCLabels(ThinCopyDist)
-
-
-    
-    
-    
-    ## Use markers from distance map
-    properties = measure.regionprops(ThinCopyDist, Image)
-    Coordinates = [prop.centroid for prop in properties] 
-    Coordinates.append((0,0))
-    Coordinates = sorted(Coordinates , key=lambda k: [k[1], k[0]])
-    Coordinates = np.asarray(Coordinates)
-    sexyImage = np.zeros_like(Image)
-    coordinates_int = np.round(Coordinates).astype(int)
-    
-    markers_raw = np.zeros([Image.shape[0], Image.shape[1]]) 
-    if(len(Coordinates) > 0) :
-     markers_raw[tuple(coordinates_int.T)] = 1 + np.arange(len(Coordinates))
-     markers = morphology.dilation(markers_raw, morphology.disk(2))
-   
-    Image = sobel(Image)
-
-
-    watershedImage = watershed(Image, markers = markers)
-    watershedImage[thin(CopyDist, max_iter = 2) == 0] = 0
-    
-    sexyImage = watershedImage
-    copymask = mask.copy()
-    
-
-    
-    sexyImage = remove_small_objects(sexyImage.astype('uint16'), min_size = min_size)
-    sexyImage = fill_label_holes(sexyImage)
-    sexyImage, forward_map, inverse_map = relabel_sequential(sexyImage)
-   
-    
-    return sexyImage, markers 
 
                  
 
@@ -528,17 +444,7 @@ def remove_big_objects(ar, max_size=6400, connectivity=1, in_place=False):
     return out
     
 
-
-def SeedStarDistMaskOZ(Image, Label, grid, max_size = 100000, min_size = 1000):
-    
-    
-    Image = Image > 0
-    Image = binary_fill_holes(Image)
-    Image= binary_erosion(Image,iterations = 10)
-    
-    
-
-    return Image             
+            
 
 def MaxProjectDist(Image, axis = -1):
     
@@ -554,31 +460,9 @@ def MidProjectDist(Image, axis = -1, slices = 1):
     MaxProject = np.amax(SmallImage, axis = axis)
     return MaxProject
 
-
-
-
  
 
-def quadplot(imageA, imageB, imageC, imageD, titleA, titleB, titleC, titleD, targetdir = None, File = None, plotTitle = None):
-    fig, axes = plt.subplots(1, 4, figsize=(15, 6))
-    ax = axes.ravel()
-    ax[0].imshow(imageA, cmap=cm.gray)
-    ax[0].set_title(titleA)
-    ax[0].set_axis_off()
-    ax[1].imshow(imageB, cmap=plt.cm.nipy_spectral)
-    ax[1].set_title(titleB)
-    ax[1].set_axis_off()
-    ax[2].imshow(imageC, cmap=plt.cm.nipy_spectral)
-    ax[2].set_title(titleC)
-    ax[2].set_axis_off()
-    ax[3].imshow(imageD, cmap=plt.cm.nipy_spectral)
-    ax[3].set_title(titleD)
-    ax[3].set_axis_off()
-    
-    plt.tight_layout()
-    plt.show()
-    for a in ax:
-      a.set_axis_off()
+
 
 
 
@@ -614,11 +498,6 @@ def doubleplot(imageA, imageB, titleA, titleB, targetdir = None, File = None, pl
     for a in ax:
       a.set_axis_off() 
 
-def _check_dtype_supported(ar):
-    # Should use `issubdtype` for bool below, but there's a bug in numpy 1.7
-    if not (ar.dtype == bool or np.issubdtype(ar.dtype, np.integer)):
-        raise TypeError("Only bool or integer image types are supported. "
-                        "Got %s." % ar.dtype)
 
 
     
@@ -746,25 +625,7 @@ def normalizer(x, mi , ma, eps = 1e-20, dtype = np.float32):
         x = normalizeZeroOne(x)
     return x    
 
-    
-def LocalThreshold2D(Image, boxsize, offset = 0, size = 10):
-    
-    if boxsize%2 == 0:
-        boxsize = boxsize + 1
-    adaptive_thresh = threshold_local(Image, boxsize, offset=offset)
-    Binary  = Image > adaptive_thresh
-    #Clean =  remove_small_objects(Binary, min_size=size, connectivity=4, in_place=False)
 
-    return Binary
-
-def OtsuThreshold2D(Image, size = 10):
-    
-    
-    adaptive_thresh = threshold_otsu(Image)
-    Binary  = Image > adaptive_thresh
-    #Clean =  remove_small_objects(Binary, min_size=size, connectivity=4, in_place=False)
-
-    return Binary.astype('uint16')
 
    ##CARE csbdeep modification of implemented function
 def normalizeFloat(x, pmin = 3, pmax = 99.8, axis = None, eps = 1e-20, dtype = np.float32):
@@ -818,79 +679,6 @@ def normalize_mi_ma(x, mi , ma, eps = 1e-20, dtype = np.float32):
     return x    
 
 
-
-
-
-def load_full_training_data(directory, filename,axes=None, verbose= True):
-    """ Load training data in .npz format.
-    The data file is expected to have the keys 'data' and 'label'     
-    """
-    
-    if directory is not None:
-      npzdata=np.load(directory + filename)
-    else:
-      npzdata=np.load(filename)  
-    
-    
-    X = npzdata['data']
-    Y = npzdata['label']
-    
-    
-        
-    
-    if axes is None:
-        axes = npzdata['axes']
-    axes = axes_check_and_normalize(axes)
-    assert 'C' in axes
-    n_images = X.shape[0]
-    assert X.shape[0] == Y.shape[0]
-    assert 0 < n_images <= X.shape[0]
-  
-    
-    X, Y = X[:n_images], Y[:n_images]
-    channel = axes_dict(axes)['C']
-    
-
-       
-
-    X = move_channel_for_backend(X,channel=channel)
-    
-    axes = axes.replace('C','') # remove channel
-    if backend_channels_last():
-        axes = axes+'C'
-    else:
-        axes = axes[:1]+'C'+axes[1:]
-
-   
-
-    if verbose:
-        ax = axes_dict(axes)
-        n_train = len(X)
-        image_size = tuple( X.shape[ax[a]] for a in 'TZYX' if a in axes )
-        n_dim = len(image_size)
-        n_channel_in = X.shape[ax['C']]
-
-        print('number of  images:\t', n_train)
-       
-        print('image size (%dD):\t\t'%n_dim, image_size)
-        print('axes:\t\t\t\t', axes)
-        print('channels in / out:\t\t', n_channel_in)
-
-    return (X,Y), axes
-
-
-def backend_channels_last():
-    import keras.backend as K
-    assert K.image_data_format() in ('channels_first','channels_last')
-    return K.image_data_format() == 'channels_last'
-
-
-def move_channel_for_backend(X,channel):
-    if backend_channels_last():
-        return np.moveaxis(X, channel, -1)
-    else:
-        return np.moveaxis(X, channel,  1)
-        
 
 def axes_check_and_normalize(axes,length=None,disallowed=None,return_allowed=False):
     """
