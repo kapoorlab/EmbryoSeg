@@ -6,15 +6,15 @@ with open('README.md') as f:
 
 
 setup(name="embryoseg",
-      version='1.0.2',
+      version='1.1.0',
       author='Varun Kapoor',
       author_email='randomaccessiblekapoor@gmail.com',
       url='https://github.com/kapoorlab/EmbryoSeg/',
       description='SmartSeed Segmentation for Mouse Pre-implantation cells.',
       long_description=long_description,
       long_description_content_type='text/markdown',
-      install_requires=["numpy", "pandas", "napari==0.4.3", "pyqt5", "btrack","natsort", "scikit-image", "scipy", "opencv-python-headless", "tifffile", "matplotlib", "ffmpeg-python", "imageio_ffmpeg"],
-      packages=['embryoseg','embryoseg/utils','embryoseg/notebooks','embryoseg/models'],
+      install_requires=["numpy", "pandas", "tensorflow", "napari==0.4.3", "pyqt5", "btrack","natsort", "scikit-image", "scipy", "opencv-python-headless", "tifffile", "matplotlib", "stardist", "csbdeep"],
+      packages=['embryoseg','embryoseg/utils','embryoseg/models'],
       classifiers=['Development Status :: 3 - Alpha',
                    'Natural Language :: English',
                    'License :: OSI Approved :: MIT License',
