@@ -17,7 +17,7 @@ Check the [notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/embryoseg/
 
 ## Install
 
-`pip install napatrackmater`
+`pip install embryoseg`
 
 
 
