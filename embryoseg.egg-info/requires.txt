@@ -1,0 +1,13 @@
+numpy
+pandas
+napari==0.4.3
+pyqt5
+btrack
+natsort
+scikit-image
+scipy
+opencv-python-headless
+tifffile
+matplotlib
+ffmpeg-python
+imageio_ffmpeg
