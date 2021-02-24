@@ -1,5 +1,6 @@
 numpy
 pandas
+tensorflow
 napari==0.4.3
 pyqt5
 btrack
@@ -9,5 +10,5 @@ scipy
 opencv-python-headless
 tifffile
 matplotlib
-ffmpeg-python
-imageio_ffmpeg
+stardist
+csbdeep
