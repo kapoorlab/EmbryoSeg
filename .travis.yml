@@ -67,12 +67,8 @@ install:
   - conda config --add channels conda-forge
   - conda update -q conda
   - conda info -a
-  - conda create -n SmartSeeds -c conda-forge python=$PYTHON_VERSION
-  - conda activate SmartSeeds
-
   
 script:
-  - conda activate SmartSeeds
   - python setup.py install
   
 
