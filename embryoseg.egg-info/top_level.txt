@@ -1,4 +1,4 @@
-Images
-models
-notebooks
-utils
+embryoseg
+embryoseg/models
+embryoseg/notebooks
+embryoseg/utils
