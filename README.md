@@ -9,7 +9,7 @@ Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
 
 ## Usage
 
-Check the [notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/embryoseg/notebooks/EmbryoSeg.ipynb).
+Check the [notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/notebooks/ColabEmbryoSeg.ipynb).
 
 ## Requirements
 
