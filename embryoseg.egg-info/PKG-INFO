@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: embryoseg
-Version: 1.1.0
+Version: 1.1.2
 Summary: SmartSeed Segmentation for Mouse Pre-implantation cells.
 Home-page: https://github.com/kapoorlab/EmbryoSeg/
 Author: Varun Kapoor
@@ -16,8 +16,9 @@ Description: # EmbryoSeg
         
         
         ## Usage
+        Check the [Training notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/notebooks/ColabTrainModel.ipynb).
         
-        Check the [notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/embryoseg/notebooks/EmbryoSeg.ipynb).
+        Check the [Prediction notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/notebooks/ColabEmbryoSeg.ipynb).
         
         ## Requirements
         
@@ -25,7 +26,7 @@ Description: # EmbryoSeg
         
         ## Install
         
-        `pip install napatrackmater`
+        `pip install embryoseg`
         
         
         

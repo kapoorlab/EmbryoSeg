@@ -6,7 +6,7 @@ with open('README.md') as f:
 
 
 setup(name="embryoseg",
-      version='1.1.0',
+      version='1.1.2',
       author='Varun Kapoor',
       author_email='randomaccessiblekapoor@gmail.com',
       url='https://github.com/kapoorlab/EmbryoSeg/',

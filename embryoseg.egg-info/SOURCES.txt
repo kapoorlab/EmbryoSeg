@@ -6,5 +6,6 @@ embryoseg.egg-info/dependency_links.txt
 embryoseg.egg-info/requires.txt
 embryoseg.egg-info/top_level.txt
 embryoseg/models/__init__.py
+embryoseg/utils/SmartSeeds2D.py
 embryoseg/utils/__init__.py
 embryoseg/utils/helpers.py
