@@ -1,5 +1,6 @@
 README.md
 setup.py
+embryoseg/__init__.py
 embryoseg.egg-info/PKG-INFO
 embryoseg.egg-info/SOURCES.txt
 embryoseg.egg-info/dependency_links.txt
@@ -7,5 +8,6 @@ embryoseg.egg-info/requires.txt
 embryoseg.egg-info/top_level.txt
 embryoseg/models/__init__.py
 embryoseg/utils/SmartSeeds2D.py
+embryoseg/utils/SmartSeeds3D.py
 embryoseg/utils/__init__.py
 embryoseg/utils/helpers.py

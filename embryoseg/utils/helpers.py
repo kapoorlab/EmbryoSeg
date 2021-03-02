@@ -191,7 +191,7 @@ def RelabelZ(previousImage, currentImage,threshold):
     
       return relabelimage
 
-def SmartSeedPrediction3D(ImageDir, SaveDir, fname,  UnetModel, StarModel, NoiseModel = None, min_size_mask = 100, min_size = 10, 
+def EmbryoSegFunction3D(ImageDir, SaveDir, fname,  UnetModel, StarModel, NoiseModel = None, min_size_mask = 100, min_size = 10, 
 n_tiles = (1,2,2), doMask = True, smartcorrection = None, start = 0, end = -1, sizeY = None, sizeX = None, UseProbability = True, filtersize = 0):
     
     

@@ -1,13 +1,13 @@
 Metadata-Version: 2.1
 Name: embryoseg
-Version: 1.1.2
+Version: 1.1.4
 Summary: SmartSeed Segmentation for Mouse Pre-implantation cells.
 Home-page: https://github.com/kapoorlab/EmbryoSeg/
 Author: Varun Kapoor
 Author-email: randomaccessiblekapoor@gmail.com
 License: UNKNOWN
 Description: # EmbryoSeg
-        Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
+        Segmentation tool for multiple touching animal embryo cells using SmartSeeds
         
         
         
