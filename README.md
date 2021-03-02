@@ -1,5 +1,5 @@
 # EmbryoSeg
-Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
+Segmentation tool for multiple touching animal embryo cells using SmartSeeds
 
 
 
