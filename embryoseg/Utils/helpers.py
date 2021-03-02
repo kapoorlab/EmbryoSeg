@@ -191,6 +191,117 @@ def RelabelZ(previousImage, currentImage,threshold):
     
       return relabelimage
 
+def SmartSeedPrediction3D(ImageDir, SaveDir, fname,  UnetModel, StarModel, NoiseModel = None, min_size_mask = 100, min_size = 10, 
+n_tiles = (1,2,2), doMask = True, smartcorrection = None, start = 0, end = -1, sizeY = None, sizeX = None, UseProbability = True, filtersize = 0):
+    
+    
+    
+    print('Generating SmartSeed results')
+    UNETResults = SaveDir + 'BinaryMask/'
+    DenoisedResults = SaveDir + 'Denoised/'
+    StarImageResults = SaveDir + 'StarDistMask/'
+    SmartSeedsResults = SaveDir + 'SmartSeedsMask/' 
+    Path(SaveDir).mkdir(exist_ok = True)
+
+
+    if StarModel is not None:
+       Path(SmartSeedsResults).mkdir(exist_ok = True)
+       Path(StarImageResults).mkdir(exist_ok = True)
+    Path(UNETResults).mkdir(exist_ok = True)
+    
+    #Read Image
+    image = imread(fname)
+    sizeZ = image.shape[0]
+    if sizeY is None:
+      sizeY = image.shape[1]
+    
+    if sizeX is None:  
+       sizeX = image.shape[2]
+    
+    SizedMask = np.zeros([sizeZ, sizeY, sizeX], dtype = 'uint16')
+    SizedSmartSeeds = np.zeros([sizeZ, sizeY, sizeX], dtype = 'uint16')
+    SizedStardist = np.zeros([sizeZ, sizeY, sizeX], dtype = 'uint16')
+    
+    print('Image Size', SizedMask.shape)
+    Name = os.path.basename(os.path.splitext(fname)[0])
+    
+    if NoiseModel is not None:
+        
+        print('Denoising Image')
+        image = NoiseModel.predict(image,'ZYX', n_tiles = n_tiles)
+
+
+    if doMask:
+          
+          Mask = UNETPrediction(gaussian_filter(image, filtersize), UnetModel, min_size_mask, n_tiles, 'ZYX')
+          
+          SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
+          if StarModel is not None:
+              SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, min_size, n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
+              #Upsample images back to original size
+              for i in range(0, Mask.shape[0]):
+                  Mask[i,:] = remove_small_objects(Mask[i,:].astype('uint16'), min_size = min_size)
+                  SmartSeeds[i,:] = remove_small_objects(SmartSeeds[i,:].astype('uint16'), min_size = min_size)
+              SmartSeeds = RemoveLabels(SmartSeeds)       
+              SizedSmartSeeds[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = SmartSeeds
+              SizedStardist[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = StarImage
+              multiplot(image[image.shape[0]//2,:], StarImage[Mask.shape[0]//2,:], SmartSeeds[SmartSeeds.shape[0]//2,:], "Image", "Stardist", "SmartSeeds")
+          if StarModel is None:
+              
+              Mask = remove_small_objects(Mask.astype('uint16'), min_size = min_size)
+
+              doubleplot(image[image.shape[0]//2,:], Mask[Mask.shape[0]//2,:], "Image", "UNET")
+              
+             
+ 
+    if doMask == False:
+        
+        Mask = UNETPrediction(gaussian_filter(image,2), UnetModel, min_size, n_tiles,  'ZYX')
+        
+        SizedMask[:, :Mask.shape[1], :Mask.shape[2]]  = Mask
+        if StarModel is not None:
+            SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, min_size, n_tiles)
+            #Upsample images back to original size
+            for i in range(0, Mask.shape[0]):
+                  Mask[i,:] = remove_small_objects(Mask[i,:].astype('uint16'), min_size = min_size)
+                  SmartSeeds[i,:] = remove_small_objects(SmartSeeds[i,:].astype('uint16'), min_size = min_size)
+            SmartSeeds = RemoveLabels(SmartSeeds)       
+            SizedSmartSeeds[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = SmartSeeds
+            SizedStardist[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = StarImage
+            multiplot(image[image.shape[0]//2,:], Mask[Mask.shape[0]//2,:], SmartSeeds[SmartSeeds.shape[0]//2,:], "Image", "Stardist", "SmartSeeds")    
+        if StarModel is None:
+           
+            Mask = remove_small_objects(Mask.astype('uint16'), min_size = min_size)
+
+            doubleplot(image[image.shape[0]//2,:], Mask[Mask.shape[0]//2,:], "Image", "UNET")    
+            
+    if NoiseModel is not None:
+
+                   Path(DenoisedResults).mkdir(exist_ok = True)
+                   imwrite((DenoisedResults + Name + '.tif' ) , image.astype('float32'))
+           
+            
+    if StarModel is not None:
+        imwrite((SmartSeedsResults + Name+ '.tif' ) , SizedSmartSeeds.astype('uint16'))
+        imwrite((StarImageResults + Name+ '.tif' ) , StarImage.astype('uint16'))
+    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16')) 
+
+
+
+
+
+        
+        
+def RemoveLabels(LabelImage, minZ = 2):
+    
+    properties = measure.regionprops(LabelImage, LabelImage)
+    for prop in properties:
+                regionlabel = prop.label
+                sizeZ = abs(prop.bbox[0] - prop.bbox[3])
+                if sizeZ <= minZ:
+                    LabelImage[LabelImage == regionlabel] = 0
+    return LabelImage  
+
 
 def STARPrediction3D(image, model, min_size, n_tiles, MaskImage = None, threshold = 20, smartcorrection = None, UseProbability = True):
     
@@ -264,22 +375,11 @@ def STARPrediction3D(image, model, min_size, n_tiles, MaskImage = None, threshol
     
 def WatershedwithMask3D(Image, Label,mask, grid, min_size = 100): 
     properties = measure.regionprops(Label, Image) 
-    binaryproperties = measure.regionprops(label(mask), Image) 
+    
     Coordinates = [prop.centroid for prop in properties] 
-    BinaryCoordinates = [prop.centroid for prop in binaryproperties]
+    
     Coordinates = sorted(Coordinates , key=lambda k: [k[0], k[1], k[2]]) 
     Coordinates.append((0,0,0))
-    tree = spatial.cKDTree(Coordinates)
-
-    
-    BinaryCoordinates = sorted(BinaryCoordinates , key=lambda k: [k[0], k[1], k[2]]) 
-    if len(BinaryCoordinates) > 0:
-        for i in range(0,len(BinaryCoordinates)):
-             index = BinaryCoordinates[i]
-             distance, point = tree.query(index)
-             if distance > min_size//2:
-                  Coordinates.append(index)
-
     Coordinates = np.asarray(Coordinates)
     coordinates_int = np.round(Coordinates).astype(int) 
     
@@ -302,16 +402,12 @@ def WatershedNOMask3D(Image, Label, grid):
     Coordinates = sorted(Coordinates , key=lambda k: [k[0], k[1], k[2]])
     Coordinates.append((0,0,0))
     Coordinates = np.asarray(Coordinates)
-    
-    
-
     coordinates_int = np.round(Coordinates).astype(int)
     markers_raw = np.zeros_like(Image)  
     markers_raw[tuple(coordinates_int.T)] = 1 + np.arange(len(Coordinates))
     
     markers = morphology.dilation(markers_raw.astype('uint16'), morphology.ball(2))
-    #for i in range(0, Image.shape[0]):
-       #Image[i,:] = sobel(Image[i,:] )
+    
     watershedImage = watershed(-Image, markers)
    
     return watershedImage, markers
@@ -364,7 +460,7 @@ def STARPrediction(image, model, min_size, n_tiles, MaskImage = None, smartcorre
     return Watershed, Markers, StarImage,MaxProjectDistance     
 
 
-def UNETPrediction(image, model, min_size, n_tiles, axis, threshold = 20):
+def UNETPrediction(image, model, min_size, n_tiles, axis):
     
     print('Applying UNET prediction')
     
