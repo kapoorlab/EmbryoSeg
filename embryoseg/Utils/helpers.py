@@ -12,48 +12,28 @@ import numpy as np
 import os
 from tqdm import tqdm
 import collections
-import glob
 import cv2
 from tifffile import imread, imwrite
-import warnings
-from skimage.morphology import erosion, dilation, square
-from skimage.morphology import skeletonize
-from skimage.filters import gaussian
 from six.moves import reduce
-from skimage.feature import canny
-from skimage.measure import regionprops_table
 from matplotlib import cm
-from skimage.filters import threshold_local, threshold_mean, threshold_otsu
+from skimage.filters import  threshold_otsu
 from skimage.morphology import remove_small_objects, thin
-from skimage.segmentation import find_boundaries
-from scipy.ndimage import distance_transform_edt
 import matplotlib.pyplot as plt
-from skimage.transform import rescale
-from tifffile import imsave, imwrite
 from scipy.ndimage.morphology import binary_fill_holes
-from skimage.measure import LineModelND, ransac
-from skimage.segmentation import watershed,random_walker
-from skimage.segmentation import morphological_geodesic_active_contour
-from scipy.ndimage import measurements
-from scipy import ndimage as ndi
-from skimage.util import invert
+from skimage.segmentation import watershed
 from pathlib import Path
 
 from skimage.segmentation import  relabel_sequential
 from skimage import morphology
-from skimage import segmentation
 from scipy.ndimage.measurements import find_objects
-from scipy.ndimage.morphology import  binary_dilation, binary_erosion
-from skimage.util import invert as invertimage
-from skimage import filters
 from skimage import measure
-from scipy.ndimage.filters import median_filter, gaussian_filter, maximum_filter, minimum_filter
+from scipy.ndimage.filters import gaussian_filter
 from skimage.filters import sobel
 from skimage.measure import label
 from scipy import spatial
 from csbdeep.utils import normalize
-
-  
+from scipy.ndimage.morphology import  binary_dilation
+from stardist.models import StarDist3D  
 
 
 def zero_pad(image, PadX, PadY):
@@ -212,6 +192,129 @@ def RelabelZ(previousImage, currentImage,threshold):
       return relabelimage
 
 
+def STARPrediction3D(image, model, min_size, n_tiles, MaskImage = None, threshold = 20, smartcorrection = None, UseProbability = True):
+    
+    print('Applying StarDist prediction')
+    copymodel = model
+    image = normalize(image, 1, 99.8, axis = (0,1,2))
+    shape = [image.shape[1], image.shape[2]]
+    image = zero_pad_time(image, 64, 64)
+    grid = copymodel.config.grid
+
+    try:
+         MidImage, details = model.predict_instances(image, n_tiles = n_tiles)
+         SmallProbability, SmallDistance = model.predict(image, n_tiles = n_tiles)
+
+    except:
+            conf = copymodel.config
+            Dummy = StarDist3D(conf)
+            overlap = Dummy._axes_tile_overlap('ZYX')
+            model._tile_overlap = [overlap]
+            MidImage, details = model.predict_instances(image, n_tiles = n_tiles)
+            SmallProbability, SmallDistance = model.predict(image, n_tiles = n_tiles)
+
+    StarImage = MidImage[:image.shape[0],:shape[0],:shape[1]]
+    SmallDistance = MaxProjectDist(SmallDistance, axis=-1)
+    Probability = np.zeros([SmallProbability.shape[0] * grid[0],SmallProbability.shape[1] * grid[1], SmallProbability.shape[2] * grid[2] ])
+    Distance = np.zeros([SmallDistance.shape[0] * grid[0], SmallDistance.shape[1] * grid[1], SmallDistance.shape[2] * grid[2] ])
+    #We only allow for the grid parameter to be 1 along the Z axis
+    for i in range(0, SmallProbability.shape[0]):
+        Probability[i,:] = cv2.resize(SmallProbability[i,:], dsize=(SmallProbability.shape[2] * grid[2] , SmallProbability.shape[1] * grid[1] ))
+        Distance[i,:] = cv2.resize(SmallDistance[i,:], dsize=(SmallDistance.shape[2] * grid[2] , SmallDistance.shape[1] * grid[1] ))
+    
+    if UseProbability:
+        
+        MaxProjectDistance = Probability[:image.shape[0],:shape[0],:shape[1]]
+
+    else:
+        
+        MaxProjectDistance = Distance[:image.shape[0],:shape[0],:shape[1]]
+
+    if MaskImage is not None:
+        
+       if smartcorrection is None: 
+          
+          Watershed, Markers = WatershedwithMask3D(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid, min_size = min_size)
+          Watershed = fill_label_holes(Watershed.astype('uint16'))
+    
+       if smartcorrection is not None:
+           
+          Watershed, Markers = WatershedSmartCorrection3D(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid, smartcorrection = smartcorrection, min_size = min_size)
+          Watershed = fill_label_holes(Watershed.astype('uint16'))
+
+    if MaskImage is None:
+
+       Watershed, Markers = WatershedNOMask3D(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), grid)
+       
+    if len(image.shape) > 2:
+        
+      for i in range(0,Watershed.shape[0]):
+          
+          Watershed[i,:] = remove_small_objects(Watershed[i,:].astype('uint16'), min_size)
+    else:
+
+        Watershed = remove_small_objects(Watershed.astype('uint16'), min_size)
+         
+    Watershed = merge_labels_across_volume(Watershed.astype('uint16'), RelabelZ, threshold= threshold)
+    
+
+    return Watershed, Markers, StarImage  
+ 
+#Default method that works well with cells which are below a certain shape and do not have weak edges
+    
+def WatershedwithMask3D(Image, Label,mask, grid, min_size = 100): 
+    properties = measure.regionprops(Label, Image) 
+    binaryproperties = measure.regionprops(label(mask), Image) 
+    Coordinates = [prop.centroid for prop in properties] 
+    BinaryCoordinates = [prop.centroid for prop in binaryproperties]
+    Coordinates = sorted(Coordinates , key=lambda k: [k[0], k[1], k[2]]) 
+    Coordinates.append((0,0,0))
+    tree = spatial.cKDTree(Coordinates)
+
+    
+    BinaryCoordinates = sorted(BinaryCoordinates , key=lambda k: [k[0], k[1], k[2]]) 
+    if len(BinaryCoordinates) > 0:
+        for i in range(0,len(BinaryCoordinates)):
+             index = BinaryCoordinates[i]
+             distance, point = tree.query(index)
+             if distance > min_size//2:
+                  Coordinates.append(index)
+
+    Coordinates = np.asarray(Coordinates)
+    coordinates_int = np.round(Coordinates).astype(int) 
+    
+    markers_raw = np.zeros_like(Image) 
+    markers_raw[tuple(coordinates_int.T)] = 1 + np.arange(len(Coordinates)) 
+    markers = morphology.dilation(markers_raw.astype('uint16'), morphology.ball(2))
+
+
+    watershedImage = watershed(-Image, markers, mask = mask.copy()) #watershedImage[mask == 0] = 0 
+    return watershedImage, markers
+
+    
+def WatershedNOMask3D(Image, Label, grid):
+    
+    
+   
+    properties = measure.regionprops(Label, Image)
+    Coordinates = [prop.centroid for prop in properties]
+    
+    Coordinates = sorted(Coordinates , key=lambda k: [k[0], k[1], k[2]])
+    Coordinates.append((0,0,0))
+    Coordinates = np.asarray(Coordinates)
+    
+    
+
+    coordinates_int = np.round(Coordinates).astype(int)
+    markers_raw = np.zeros_like(Image)  
+    markers_raw[tuple(coordinates_int.T)] = 1 + np.arange(len(Coordinates))
+    
+    markers = morphology.dilation(markers_raw.astype('uint16'), morphology.ball(2))
+    #for i in range(0, Image.shape[0]):
+       #Image[i,:] = sobel(Image[i,:] )
+    watershedImage = watershed(-Image, markers)
+   
+    return watershedImage, markers
 
  
 def STARPrediction(image, model, min_size, n_tiles, MaskImage = None, smartcorrection = None):
@@ -356,6 +459,76 @@ def WatershedwithMask(Image, Label,mask, grid):
     
     return watershedImage, markers  
 
+
+
+
+def WatershedSmartCorrection3D(Image, Label, mask, grid, smartcorrection = 20, max_size = 100000, min_size = 1):
+    
+    
+   
+    CopyDist = Image.copy()
+    thresh = threshold_otsu(CopyDist)
+    CopyDist = CopyDist > thresh
+
+    ## Use markers from Label image
+    Labelproperties = measure.regionprops(Label, Image)
+    LabelCoordinates = [prop.centroid for prop in Labelproperties] 
+    LabelCoordinates.append((0,0,0))
+    LabelCoordinates = sorted(LabelCoordinates , key=lambda k: [k[1], k[0], k[2]])
+    LabelCoordinates = np.asarray(LabelCoordinates)
+    sexyImage = np.zeros_like(Image)
+    Labelcoordinates_int = np.round(LabelCoordinates).astype(int)
+    
+    Labelmarkers_raw = np.zeros([Image.shape[0], Image.shape[1],Image.shape[2] ]) 
+    if(len(LabelCoordinates) > 0) :
+     Labelmarkers_raw[tuple(Labelcoordinates_int.T)] = 1 + np.arange(len(LabelCoordinates))
+     
+     Labelmarkers = morphology.dilation(Labelmarkers_raw.astype('uint16'), morphology.ball(5))
+  
+
+   
+    for i in range(0, Image.shape[0]):
+        Image[i,:] = sobel(Image[i,:].astype('uint16'))
+
+
+    watershedImage = watershed(Image, markers = Labelmarkers)
+
+    TestCopyDist = np.zeros([CopyDist.shape[0],CopyDist.shape[1],CopyDist.shape[2]])
+    for i in range(0, CopyDist.shape[0]):
+       TestCopyDist[i,:] = thin(CopyDist[i,:] , max_iter = smartcorrection//2)
+
+    watershedImage[TestCopyDist == 0] = 0
+    sexyImage = watershedImage
+    copymask = mask.copy()
+    
+    Binary = watershedImage > 0
+   
+    if smartcorrection > 0:
+       indices = list(zip(*np.where(Binary>0)))
+       if(len(indices) > 0):
+        indices = np.asarray(indices)
+        tree = spatial.cKDTree(indices)
+        copymask = copymask - Binary
+        maskindices = list(zip(*((np.where(copymask>0)))))
+        maskindices = np.asarray(maskindices)
+    
+        for i in (range(0,maskindices.shape[0])):
+    
+           pt = maskindices[i]
+           closest =  tree.query(pt)
+        
+           if closest[0] < smartcorrection:
+               sexyImage[pt[0], pt[1]] = watershedImage[indices[closest[1]][0], indices[closest[1]][1]]  
+       
+    sexyImage = remove_small_objects(sexyImage.astype('uint16'), min_size = min_size)
+    sexyImage = fill_label_holes(sexyImage)
+    sexyImage, forward_map, inverse_map = relabel_sequential(sexyImage)
+    
+    
+    return sexyImage, Labelmarkers  
+
+
+
 #Default method that works well with cells which are below a certain shape and do not have weak edges
     
 
@@ -423,26 +596,6 @@ def WatershedSmartCorrection(Image, Label, mask, grid, smartcorrection = 20, max
 
                  
 
-def remove_big_objects(ar, max_size=6400, connectivity=1, in_place=False):
-    
-    out = ar.copy()
-    ccs = out
-
-    try:
-        component_sizes = np.bincount(ccs.ravel())
-    except ValueError:
-        raise ValueError("Negative value labels are not supported. Try "
-                         "relabeling the input with `scipy.ndimage.label` or "
-                         "`skimage.morphology.label`.")
-
-
-
-    too_big = component_sizes > max_size
-    too_big_mask = too_big[ccs]
-    out[too_big_mask] = 0
-
-    return out
-    
 
             
 
@@ -570,6 +723,30 @@ def _raise(e):
     raise e
 def compose(*funcs):
     return lambda x: reduce(lambda f,g: g(f), funcs, x)
+
+
+
+def zero_pad_time(image, PadX, PadY):
+
+          sizeY = image.shape[2]
+          sizeX = image.shape[1]
+          
+          sizeXextend = sizeX
+          sizeYextend = sizeY
+         
+ 
+          while sizeXextend%PadX!=0:
+              sizeXextend = sizeXextend + 1
+        
+          while sizeYextend%PadY!=0:
+              sizeYextend = sizeYextend + 1
+
+          extendimage = np.zeros([image.shape[0], sizeXextend, sizeYextend])
+          
+          extendimage[:,0:sizeX, 0:sizeY] = image
+              
+              
+          return extendimage  
 
 def normalizeZeroOne(x):
 
