@@ -6,12 +6,9 @@
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
-import glob
 import sys
 sys.path.append('../../')
-import glob
-from Utils import SmartSeeds3D
-from tifffile import imread, imwrite
+from embryoseg.utils import SmartSeeds3D
 os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 
@@ -31,9 +28,9 @@ os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
 
 Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining//'
-NPZ_filename = 'GuignardLabEmbryo'
+NPZ_filename = 'GuignardLabAscadianEmbryo'
 Model_dir = '/data/u934/service_imagerie/v_kapoor/CurieDeepLearningModels/LightSheetTraining/'
-Model_Name = 'GuignardLabEmbryo'
+Model_Name = 'GuignardLabAscadianEmbryo'
 
 
 # # In this cell choose the network training parameters for the Neural Network
@@ -84,7 +81,7 @@ TrainSTAR = False
 
 
 
-model = SmartSeeds3D(BaseDir = Data_dir, NPZfilename = NPZ_filename, model_name = Model_Name, model_dir = Model_dir, n_patches_per_image = n_patches_per_image,GenerateNPZ = GenerateNPZ, TrainUNET = TrainUNET, TrainSTAR = TrainSTAR, PatchX= PatchX, PatchY= PatchY, PatchZ = PatchZ,  use_gpu = use_gpu_opencl,  batch_size = batch_size, depth = NetworkDepth, kern_size = Kernel, startfilter = startfilter, n_rays = Rays, epochs = Epochs, learning_rate = LearningRate)
+SmartSeeds3D(BaseDir = Data_dir, NPZfilename = NPZ_filename, model_name = Model_Name, model_dir = Model_dir, n_patches_per_image = n_patches_per_image,GenerateNPZ = GenerateNPZ, TrainUNET = TrainUNET, TrainSTAR = TrainSTAR, PatchX= PatchX, PatchY= PatchY, PatchZ = PatchZ,  use_gpu = use_gpu_opencl,  batch_size = batch_size, depth = NetworkDepth, kern_size = Kernel, startfilter = startfilter, n_rays = Rays, epochs = Epochs, learning_rate = LearningRate)
 
 
 # In[ ]:
