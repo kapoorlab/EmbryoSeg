@@ -284,7 +284,7 @@ class SmartSeeds3D(object):
                             (self.X_trn,self.Y_trn), (self.X_val, self.Y_val), axes = load_training_data(load_path, validation_split=0.1, verbose=True)
                           
                             print(Config3D.__doc__)
-                            extents = calculate_extents(self.Y)
+                            extents = calculate_extents(self.Y_trn)
                             anisotropy = tuple(np.max(extents) / extents)
                             rays = Rays_GoldenSpiral(self.n_rays, anisotropy=anisotropy)
                             conf = Config3D (
@@ -295,12 +295,12 @@ class SmartSeeds3D(object):
                                   train_learning_rate = self.learning_rate,
                                   unet_n_depth = self.depth,
                                   train_checkpoint = self.model_dir + self.model_name +'.h5',
-                                  resnet_kernel_size = (self.kern_size, self.kern_size, self.kern_size),
+                                  unet_kernel_size = (self.kern_size, self.kern_size, self.kern_size),
                                   train_patch_size = (self.PatchZ, self.PatchX, self.PatchY ),
                                   train_batch_size = self.batch_size,
                                   unet_n_filter_base = self.startfilter,
                                   train_dist_loss = 'mae',
-                                  grid         = (1,4,4),#tuple(1 if a > 1.5 else 2 for a in anisotropy),
+                                  grid         = (1,4,4),
                                   use_gpu      = self.use_gpu,
                                   n_channel_in = 1
                                   )
@@ -311,7 +311,7 @@ class SmartSeeds3D(object):
                                 
                             Starmodel = StarDist3D(conf, name=self.model_name, basedir=self.model_dir)
                             print(Starmodel._axes_tile_overlap('ZYX'), os.path.exists(self.model_dir + self.model_name + '/' + 'weights_now.h5'))                            
-                            median_size = calculate_extents(self.Y, np.median)
+                            median_size = calculate_extents(self.Y_trn, np.median)
                             fov = np.array(Starmodel._axes_tile_overlap('ZYX'))
                             if any(median_size > fov):
                                  print("WARNING: median object size larger than field of view of the neural network.")
