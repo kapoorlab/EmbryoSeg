@@ -165,6 +165,8 @@ class SmartSeeds3D(object):
                     Path(self.BaseDir + '/RealMask/').mkdir(exist_ok=True)
                     RealMask = sorted(glob.glob(self.BaseDir + '/RealMask/' + '*.tif'))
                     
+                    ValRaw = sorted(glob.glob(self.BaseDir + '/ValRaw/' + '*.tif'))
+                    ValRealMask = sorted(glob.glob(self.BaseDir + '/ValRealMask/' + '*.tif'))
                     
                     print('Instance segmentation masks:', len(RealMask))
                     if len(RealMask)== 0:
@@ -278,14 +280,16 @@ class SmartSeeds3D(object):
                     if self.TrainSTAR:
                             print('Training StarDistModel model with unet backbone')
                             self.axis_norm = (0,1,2)
-                            load_path = self.BaseDir + self.NPZfilename + 'Star' + '.npz'
                             
+                            self.X_trn = self.DataSequencer(Raw, self.axis_norm, Normalize = True, labelMe = False)
+                            self.Y_trn = self.DataSequencer(RealMask, self.axis_norm, Normalize = False, labelMe = True)
                             
-                            (self.X_trn,self.Y_trn), (self.X_val, self.Y_val), axes = load_training_data(load_path, validation_split=0.1, verbose=True)
-                          
+                            self.X_val = self.DataSequencer(ValRaw, self.axis_norm, Normalize = True, labelMe = False)
+                            self.Y_val = self.DataSequencer(ValRealMask, self.axis_norm, Normalize = False, labelMe = True)
+                            
                             print(Config3D.__doc__)
-                            extents = calculate_extents(self.Y_trn)
-                            anisotropy = tuple(np.max(extents) / extents)
+                            
+                            anisotropy = (1,1,1)
                             rays = Rays_GoldenSpiral(self.n_rays, anisotropy=anisotropy)
                             conf = Config3D (
                                   rays       = rays,
@@ -311,10 +315,6 @@ class SmartSeeds3D(object):
                                 
                             Starmodel = StarDist3D(conf, name=self.model_name, basedir=self.model_dir)
                             print(Starmodel._axes_tile_overlap('ZYX'), os.path.exists(self.model_dir + self.model_name + '/' + 'weights_now.h5'))                            
-                            median_size = calculate_extents(self.Y_trn, np.median)
-                            fov = np.array(Starmodel._axes_tile_overlap('ZYX'))
-                            if any(median_size > fov):
-                                 print("WARNING: median object size larger than field of view of the neural network.")
                                  
                                  
                             if self.copy_model_dir is not None:   
@@ -343,8 +343,8 @@ class SmartSeeds3D(object):
                                 print('Loading checkpoint model')
                                 Starmodel.load_weights(self.model_dir + self.model_name + '/' + 'weights_best.h5')     
                                  
-                            Starmodel.train(self.X_trn, self.Y_trn, validation_data=(self.X_val,self.Y_val), epochs = self.epochs)
-                            Starmodel.optimize_thresholds(self.X_val, self.Y_val)
+                            historyStar = Starmodel.train(self.X_trn, self.Y_trn, validation_data=(self.X_val,self.Y_val), epochs = self.epochs)
+                            
         
         
                  

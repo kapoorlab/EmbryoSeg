@@ -1,3 +1,3 @@
 embryoseg
-embryoseg/models
+embryoseg/stardist_kapoor
 embryoseg/utils
