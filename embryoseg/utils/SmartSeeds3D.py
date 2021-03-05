@@ -306,7 +306,8 @@ class SmartSeeds3D(object):
                                   train_dist_loss = 'mae',
                                   grid         = (1,4,4),
                                   use_gpu      = self.use_gpu,
-                                  n_channel_in = 1
+                                  n_channel_in = 1,
+                                  train_sample_cache = False
                                   )
                             
                             print(conf)
