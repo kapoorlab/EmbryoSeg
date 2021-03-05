@@ -1,0 +1,206 @@
+Using TensorFlow backend.
+base_model.py (148): output path for model already exists, files may be overwritten: /data/u934/service_imagerie/v_kapoor/CurieDeepLearningModels/LightSheetTraining/GuignardLabEmbryo
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-03-05 10:53:08.772590: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2021-03-05 10:53:08.825157: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1618] Found device 0 with properties: 
+name: Tesla V100-PCIE-32GB major: 7 minor: 0 memoryClockRate(GHz): 1.38
+pciBusID: 0000:af:00.0
+2021-03-05 10:53:08.825785: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2021-03-05 10:53:08.828045: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2021-03-05 10:53:08.829857: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10.0
+2021-03-05 10:53:08.831854: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10.0
+2021-03-05 10:53:08.834304: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10.0
+2021-03-05 10:53:08.836188: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10.0
+2021-03-05 10:53:08.840473: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2021-03-05 10:53:08.843254: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1746] Adding visible gpu devices: 0
+2021-03-05 10:53:08.843730: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 AVX512F FMA
+2021-03-05 10:53:08.851977: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2800000000 Hz
+2021-03-05 10:53:08.853613: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x55555a7a12e0 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2021-03-05 10:53:08.853635: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2021-03-05 10:53:08.964828: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x55555a804260 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2021-03-05 10:53:08.964892: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Tesla V100-PCIE-32GB, Compute Capability 7.0
+2021-03-05 10:53:08.969107: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1618] Found device 0 with properties: 
+name: Tesla V100-PCIE-32GB major: 7 minor: 0 memoryClockRate(GHz): 1.38
+pciBusID: 0000:af:00.0
+2021-03-05 10:53:08.969227: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2021-03-05 10:53:08.969265: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2021-03-05 10:53:08.969298: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10.0
+2021-03-05 10:53:08.969330: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10.0
+2021-03-05 10:53:08.969360: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10.0
+2021-03-05 10:53:08.969390: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10.0
+2021-03-05 10:53:08.969431: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2021-03-05 10:53:08.977019: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1746] Adding visible gpu devices: 0
+2021-03-05 10:53:08.977114: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2021-03-05 10:53:08.980571: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1159] Device interconnect StreamExecutor with strength 1 edge matrix:
+2021-03-05 10:53:08.980586: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1165]      0 
+2021-03-05 10:53:08.980593: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1178] 0:   N 
+2021-03-05 10:53:08.984013: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1304] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 30560 MB memory) -> physical GPU (device: 0, name: Tesla V100-PCIE-32GB, pci bus id: 0000:af:00.0, compute capability: 7.0)
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-03-05 10:53:09.930940: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2021-03-05 10:53:11.340126: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/tensorflow_core/python/ops/nn_impl.py:183: where (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+utils.py (85): EDT of constant label image is ill-defined. (Assuming background around it.)
+WARNING:tensorflow:
+The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+  * https://github.com/tensorflow/io (for I/O related ops)
+If you depend on functionality not listed there, please file an issue.
+
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/csbdeep/utils/tf.py:309: The name tf.summary.image is deprecated. Please use tf.compat.v1.summary.image instead.
+
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/csbdeep/utils/tf.py:337: The name tf.summary.merge is deprecated. Please use tf.compat.v1.summary.merge instead.
+
+WARNING:tensorflow:From /data/usr_app/VarunAnaconda/lib/python3.7/site-packages/csbdeep/utils/tf.py:344: The name tf.summary.FileWriter is deprecated. Please use tf.compat.v1.summary.FileWriter instead.
+
+Instance segmentation masks: 805
+Semantic segmentation masks: 863
+Training StarDistModel model with unet backbone
+Total sequences 805
+Configuration for a :class:`StarDist3D` model.
+
+    Parameters
+    ----------
+    axes : str or None
+        Axes of the input images.
+    rays : Rays_Base, int, or None
+        Ray factory (e.g. Ray_GoldenSpiral).
+        If an integer then Ray_GoldenSpiral(rays) will be used
+    n_channel_in : int
+        Number of channels of given input image (default: 1).
+    grid : (int,int,int)
+        Subsampling factors (must be powers of 2) for each of the axes.
+        Model will predict on a subsampled grid for increased efficiency and larger field of view.
+    anisotropy : (float,float,float)
+        Anisotropy of objects along each of the axes.
+        Use ``None`` to disable only for (nearly) isotropic objects shapes.
+        Also see ``utils.calculate_extents``.
+    backbone : str
+        Name of the neural network architecture to be used as backbone.
+    kwargs : dict
+        Overwrite (or add) configuration attributes (see below).
+
+
+    Attributes
+    ----------
+    unet_n_depth : int
+        Number of U-Net resolution levels (down/up-sampling layers).
+    unet_kernel_size : (int,int,int)
+        Convolution kernel size for all (U-Net) convolution layers.
+    unet_n_filter_base : int
+        Number of convolution kernels (feature channels) for first U-Net layer.
+        Doubled after each down-sampling layer.
+    unet_pool : (int,int,int)
+        Maxpooling size for all (U-Net) convolution layers.
+    net_conv_after_unet : int
+        Number of filters of the extra convolution layer after U-Net (0 to disable).
+    unet_* : *
+        Additional parameters for U-net backbone.
+    resnet_n_blocks : int
+        Number of ResNet blocks.
+    resnet_kernel_size : (int,int,int)
+        Convolution kernel size for all ResNet blocks.
+    resnet_n_filter_base : int
+        Number of convolution kernels (feature channels) for ResNet blocks.
+        (Number is doubled after every downsampling, see ``grid``.)
+    net_conv_after_resnet : int
+        Number of filters of the extra convolution layer after ResNet (0 to disable).
+    resnet_* : *
+        Additional parameters for ResNet backbone.
+    train_patch_size : (int,int,int)
+        Size of patches to be cropped from provided training images.
+    train_background_reg : float
+        Regularizer to encourage distance predictions on background regions to be 0.
+    train_foreground_only : float
+        Fraction (0..1) of patches that will only be sampled from regions that contain foreground pixels.
+    train_dist_loss : str
+        Training loss for star-convex polygon distances ('mse' or 'mae').
+    train_loss_weights : tuple of float
+        Weights for losses relating to (probability, distance)
+    train_epochs : int
+        Number of training epochs.
+    train_steps_per_epoch : int
+        Number of parameter update steps per epoch.
+    train_learning_rate : float
+        Learning rate for training.
+    train_batch_size : int
+        Batch size for training.
+    train_tensorboard : bool
+        Enable TensorBoard for monitoring training progress.
+    train_n_val_patches : int
+        Number of patches to be extracted from validation images (``None`` = one patch per image).
+    train_reduce_lr : dict
+        Parameter :class:`dict` of ReduceLROnPlateau_ callback; set to ``None`` to disable.
+    use_gpu : bool
+        Indicate that the data generator should use OpenCL to do computations on the GPU.
+
+        .. _ReduceLROnPlateau: https://keras.io/callbacks/#reducelronplateau
+    
+Config3D(anisotropy=(1, 1, 1), axes='ZYXC', backbone='unet', grid=(1, 4, 4), n_channel_in=1, n_channel_out=49, n_dim=3, n_rays=48, net_conv_after_unet=128, net_input_shape=(None, None, None, 1), net_mask_shape=(None, None, None, 1), rays_json={'name': 'Rays_GoldenSpiral', 'kwargs': {'n': 48, 'anisotropy': (1, 1, 1)}}, train_background_reg=0.0001, train_batch_size=1, train_checkpoint='/data/u934/service_imagerie/v_kapoor/CurieDeepLearningModels/LightSheetTraining/GuignardLabEmbryo.h5', train_checkpoint_epoch='weights_now.h5', train_checkpoint_last='weights_last.h5', train_dist_loss='mae', train_epochs=1, train_foreground_only=0.9, train_learning_rate=0.0001, train_loss_weights=(1, 0.2), train_n_val_patches=None, train_patch_size=(64, 256, 256), train_reduce_lr={'factor': 0.5, 'patience': 40, 'min_delta': 0}, train_steps_per_epoch=40, train_tensorboard=True, unet_activation='relu', unet_batch_norm=False, unet_dropout=0.0, unet_kernel_size=(3, 3, 3), unet_last_activation='relu', unet_n_conv_per_depth=2, unet_n_depth=3, unet_n_filter_base=48, unet_pool=(2, 2, 2), unet_prefix='', use_gpu=False)
+Using default values: prob_thresh=0.5, nms_thresh=0.4.
+(32, 128, 128) True
+Loading checkpoint model
+95 95
+805 805
+Epoch 1/1
+
+ 1/40 [..............................] - ETA: 44:09 - loss: 6.8402 - prob_loss: 0.6204 - dist_loss: 31.0993 - prob_kld: 0.1302 - dist_relevant_mae: 31.0993 - dist_relevant_mse: 1490.7622
+ 2/40 [>.............................] - ETA: 27:30 - loss: 8.3524 - prob_loss: 0.6317 - dist_loss: 38.6034 - prob_kld: 0.1239 - dist_relevant_mae: 38.6034 - dist_relevant_mse: 2854.1460
+ 3/40 [=>............................] - ETA: 22:54 - loss: 7.3265 - prob_loss: 0.6228 - dist_loss: 33.5183 - prob_kld: 0.1192 - dist_relevant_mae: 33.5183 - dist_relevant_mse: 2170.6084
+ 4/40 [==>...........................] - ETA: 20:36 - loss: 7.4356 - prob_loss: 0.6144 - dist_loss: 34.1061 - prob_kld: 0.1097 - dist_relevant_mae: 34.1061 - dist_relevant_mse: 2144.3511
+ 5/40 [==>...........................] - ETA: 18:59 - loss: 7.5353 - prob_loss: 0.6151 - dist_loss: 34.6008 - prob_kld: 0.1112 - dist_relevant_mae: 34.6008 - dist_relevant_mse: 2157.2654
+ 6/40 [===>..........................] - ETA: 17:11 - loss: 7.6309 - prob_loss: 0.6219 - dist_loss: 35.0449 - prob_kld: 0.1172 - dist_relevant_mae: 35.0448 - dist_relevant_mse: 2202.3337
+ 7/40 [====>.........................] - ETA: 16:17 - loss: 7.7452 - prob_loss: 0.6277 - dist_loss: 35.5875 - prob_kld: 0.1232 - dist_relevant_mae: 35.5875 - dist_relevant_mse: 2308.7368
+ 8/40 [=====>........................] - ETA: 15:37 - loss: 7.6020 - prob_loss: 0.6220 - dist_loss: 34.9002 - prob_kld: 0.1182 - dist_relevant_mae: 34.9002 - dist_relevant_mse: 2198.5308
+ 9/40 [=====>........................] - ETA: 14:34 - loss: 8.1752 - prob_loss: 0.6290 - dist_loss: 37.7308 - prob_kld: 0.1159 - dist_relevant_mae: 37.7307 - dist_relevant_mse: 2677.7620
+10/40 [======>.......................] - ETA: 14:01 - loss: 7.9177 - prob_loss: 0.6260 - dist_loss: 36.4586 - prob_kld: 0.1134 - dist_relevant_mae: 36.4585 - dist_relevant_mse: 2519.7969
+11/40 [=======>......................] - ETA: 13:00 - loss: 7.6612 - prob_loss: 0.6238 - dist_loss: 35.1868 - prob_kld: 0.1131 - dist_relevant_mae: 35.1867 - dist_relevant_mse: 2367.4158
+12/40 [========>.....................] - ETA: 12:11 - loss: 7.4762 - prob_loss: 0.6325 - dist_loss: 34.2188 - prob_kld: 0.1228 - dist_relevant_mae: 34.2186 - dist_relevant_mse: 2257.8765
+13/40 [========>.....................] - ETA: 11:25 - loss: 7.3616 - prob_loss: 0.6482 - dist_loss: 33.5670 - prob_kld: 0.1412 - dist_relevant_mae: 33.5667 - dist_relevant_mse: 2173.8665
+14/40 [=========>....................] - ETA: 11:02 - loss: 7.2384 - prob_loss: 0.6545 - dist_loss: 32.9196 - prob_kld: 0.1482 - dist_relevant_mae: 32.9192 - dist_relevant_mse: 2097.8689
+15/40 [==========>...................] - ETA: 10:21 - loss: 7.6689 - prob_loss: 0.6567 - dist_loss: 35.0614 - prob_kld: 0.1505 - dist_relevant_mae: 35.0610 - dist_relevant_mse: 2404.5574
+16/40 [===========>..................] - ETA: 10:05 - loss: 7.8751 - prob_loss: 0.6566 - dist_loss: 36.0929 - prob_kld: 0.1503 - dist_relevant_mae: 36.0925 - dist_relevant_mse: 2576.4485
+17/40 [===========>..................] - ETA: 9:33 - loss: 8.2239 - prob_loss: 0.6583 - dist_loss: 37.8279 - prob_kld: 0.1522 - dist_relevant_mae: 37.8275 - dist_relevant_mse: 2823.2217 
+18/40 [============>.................] - ETA: 9:13 - loss: 8.1352 - prob_loss: 0.6543 - dist_loss: 37.4044 - prob_kld: 0.1493 - dist_relevant_mae: 37.4040 - dist_relevant_mse: 2751.6221
+19/40 [=============>................] - ETA: 8:36 - loss: 7.9753 - prob_loss: 0.6507 - dist_loss: 36.6229 - prob_kld: 0.1462 - dist_relevant_mae: 36.6226 - dist_relevant_mse: 2652.4614
+20/40 [==============>...............] - ETA: 8:38 - loss: 7.9133 - prob_loss: 0.6489 - dist_loss: 36.3217 - prob_kld: 0.1444 - dist_relevant_mae: 36.3214 - dist_relevant_mse: 2622.0352
+21/40 [==============>...............] - ETA: 8:07 - loss: 8.0680 - prob_loss: 0.6491 - dist_loss: 37.0943 - prob_kld: 0.1439 - dist_relevant_mae: 37.0940 - dist_relevant_mse: 2746.4600
+22/40 [===============>..............] - ETA: 7:43 - loss: 7.9453 - prob_loss: 0.6546 - dist_loss: 36.4534 - prob_kld: 0.1492 - dist_relevant_mae: 36.4531 - dist_relevant_mse: 2661.7522
+23/40 [================>.............] - ETA: 7:19 - loss: 8.0937 - prob_loss: 0.6533 - dist_loss: 37.2016 - prob_kld: 0.1467 - dist_relevant_mae: 37.2013 - dist_relevant_mse: 2791.2910
+24/40 [=================>............] - ETA: 6:50 - loss: 8.2174 - prob_loss: 0.6525 - dist_loss: 37.8246 - prob_kld: 0.1452 - dist_relevant_mae: 37.8243 - dist_relevant_mse: 2898.3086
+25/40 [=================>............] - ETA: 6:27 - loss: 8.0609 - prob_loss: 0.6548 - dist_loss: 37.0309 - prob_kld: 0.1479 - dist_relevant_mae: 37.0305 - dist_relevant_mse: 2805.5813
+26/40 [==================>...........] - ETA: 6:03 - loss: 8.2499 - prob_loss: 0.6562 - dist_loss: 37.9685 - prob_kld: 0.1495 - dist_relevant_mae: 37.9681 - dist_relevant_mse: 2937.2913
+27/40 [===================>..........] - ETA: 5:39 - loss: 8.4477 - prob_loss: 0.6580 - dist_loss: 38.9484 - prob_kld: 0.1514 - dist_relevant_mae: 38.9480 - dist_relevant_mse: 3159.9360
+28/40 [====================>.........] - ETA: 5:15 - loss: 8.3947 - prob_loss: 0.6983 - dist_loss: 38.4816 - prob_kld: 0.1920 - dist_relevant_mae: 38.4811 - dist_relevant_mse: 3090.5188
+29/40 [====================>.........] - ETA: 4:50 - loss: 8.2674 - prob_loss: 0.6982 - dist_loss: 37.8464 - prob_kld: 0.1919 - dist_relevant_mae: 37.8459 - dist_relevant_mse: 3009.7544
+30/40 [=====================>........] - ETA: 4:20 - loss: 8.2552 - prob_loss: 0.6987 - dist_loss: 37.7827 - prob_kld: 0.1923 - dist_relevant_mae: 37.7822 - dist_relevant_mse: 3004.8728
+31/40 [======================>.......] - ETA: 3:53 - loss: 8.1944 - prob_loss: 0.6982 - dist_loss: 37.4808 - prob_kld: 0.1925 - dist_relevant_mae: 37.4803 - dist_relevant_mse: 2959.7026
+32/40 [=======================>......] - ETA: 3:26 - loss: 8.2456 - prob_loss: 0.6943 - dist_loss: 37.7566 - prob_kld: 0.1885 - dist_relevant_mae: 37.7561 - dist_relevant_mse: 3009.3274
+33/40 [=======================>......] - ETA: 3:01 - loss: 8.1715 - prob_loss: 0.6930 - dist_loss: 37.3927 - prob_kld: 0.1873 - dist_relevant_mae: 37.3922 - dist_relevant_mse: 2951.9551
+34/40 [========================>.....] - ETA: 2:41 - loss: 8.0818 - prob_loss: 0.6957 - dist_loss: 36.9305 - prob_kld: 0.1903 - dist_relevant_mae: 36.9300 - dist_relevant_mse: 2887.9590
+35/40 [=========================>....] - ETA: 2:13 - loss: 8.2433 - prob_loss: 0.6971 - dist_loss: 37.7309 - prob_kld: 0.1918 - dist_relevant_mae: 37.7304 - dist_relevant_mse: 2996.4014
+36/40 [==========================>...] - ETA: 1:46 - loss: 8.1897 - prob_loss: 0.6971 - dist_loss: 37.4632 - prob_kld: 0.1920 - dist_relevant_mae: 37.4627 - dist_relevant_mse: 2954.0203
+37/40 [==========================>...] - ETA: 1:19 - loss: 8.1634 - prob_loss: 0.6956 - dist_loss: 37.3389 - prob_kld: 0.1907 - dist_relevant_mae: 37.3384 - dist_relevant_mse: 2930.9946utils.py (85): EDT of constant label image is ill-defined. (Assuming background around it.)
+data_utils.py (718): An input could not be retrieved. It could be because a worker has died.We do not have any information on the lost sample.
+Traceback (most recent call last):
+  File "SecondLightCellTrainingStar.py", line 89, in <module>
+    SmartSeeds3D(BaseDir = Data_dir, NPZfilename = NPZ_filename, model_name = Model_Name, model_dir = Model_dir, n_patches_per_image = n_patches_per_image,GenerateNPZ = GenerateNPZ, GenerateStarNPZ = GenerateStarNPZ, TrainUNET = TrainUNET, TrainSTAR = TrainSTAR, PatchX= PatchX, PatchY= PatchY, PatchZ = PatchZ,  use_gpu = use_gpu_opencl,  batch_size = batch_size, depth = NetworkDepth, kern_size = Kernel, startfilter = startfilter, n_rays = Rays, epochs = Epochs, learning_rate = LearningRate)
+  File "/home/vkapoor/EmbryoSeg/embryoseg/utils/SmartSeeds3D.py", line 127, in __init__
+    self.Train()
+  File "/home/vkapoor/EmbryoSeg/embryoseg/utils/SmartSeeds3D.py", line 355, in Train
+    Starmodel.train(self.X, self.Y,validation_data = (self.Xval, self.Yval), epochs = self.epochs)
+  File "/data/usr_app/VarunAnaconda/lib/python3.7/site-packages/stardist/models/model3d.py", line 474, in train
+    callbacks=self.callbacks, verbose=1)
+  File "/data/usr_app/VarunAnaconda/lib/python3.7/site-packages/keras/legacy/interfaces.py", line 91, in wrapper
+    return func(*args, **kwargs)
+  File "/data/usr_app/VarunAnaconda/lib/python3.7/site-packages/keras/engine/training.py", line 1732, in fit_generator
+    initial_epoch=initial_epoch)
+  File "/data/usr_app/VarunAnaconda/lib/python3.7/site-packages/keras/engine/training_generator.py", line 185, in fit_generator
+    generator_output = next(output_generator)
+StopIteration
