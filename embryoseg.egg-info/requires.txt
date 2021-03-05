@@ -9,3 +9,4 @@ opencv-python-headless
 tifffile
 matplotlib
 csbdeep
+stardist

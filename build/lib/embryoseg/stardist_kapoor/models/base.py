@@ -17,7 +17,7 @@ from csbdeep.utils import _raise, backend_channels_last, axes_check_and_normaliz
 from csbdeep.internals.predict import tile_iterator
 from csbdeep.data import Resizer
 
-from ..utils import _is_power_of_2, optimize_threshold
+from stardist.utils import _is_power_of_2, optimize_threshold
 
 
 # TODO: support (optional) classification of objects?

@@ -19,9 +19,9 @@ from csbdeep.data import sample_patches_from_multiple_stacks
 from skimage.segmentation import clear_border
 
 from .base import StarDistBase, StarDistDataBase
-from ..utils import edt_prob, _normalize_grid
-from ..geometry import star_dist, dist_to_coord, polygons_to_label
-from ..nms import non_maximum_suppression
+from stardist.utils import edt_prob, _normalize_grid
+from stardist.geometry import star_dist, dist_to_coord, polygons_to_label
+from stardist.nms import non_maximum_suppression
 
 
 
