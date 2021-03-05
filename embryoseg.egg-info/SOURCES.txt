@@ -13,6 +13,13 @@ embryoseg/stardist_kapoor/plot.py
 embryoseg/stardist_kapoor/rays3d.py
 embryoseg/stardist_kapoor/utils.py
 embryoseg/stardist_kapoor/version.py
+embryoseg/stardist_kapoor/geometry/__init__.py
+embryoseg/stardist_kapoor/geometry/geom2d.py
+embryoseg/stardist_kapoor/geometry/geom3d.py
+embryoseg/stardist_kapoor/models/__init__.py
+embryoseg/stardist_kapoor/models/base.py
+embryoseg/stardist_kapoor/models/model2d.py
+embryoseg/stardist_kapoor/models/model3d.py
 embryoseg/utils/SmartSeeds2D.py
 embryoseg/utils/SmartSeeds3D.py
 embryoseg/utils/__init__.py

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: embryoseg
-Version: 1.1.9
+Version: 1.2.0
 Summary: SmartSeed Segmentation for animal embryonic cells.
 Home-page: https://github.com/kapoorlab/EmbryoSeg/
 Author: Varun Kapoor

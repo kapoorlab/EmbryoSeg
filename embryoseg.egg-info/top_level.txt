@@ -1,3 +1,10 @@
 embryoseg
 embryoseg/stardist_kapoor
+embryoseg/stardist_kapoor/geometry
+embryoseg/stardist_kapoor/kernels
+embryoseg/stardist_kapoor/lib
+embryoseg/stardist_kapoor/lib/qhull_src
+embryoseg/stardist_kapoor/lib/qhull_src/src/libqhull_r
+embryoseg/stardist_kapoor/lib/qhull_src/src/libqhullcpp
+embryoseg/stardist_kapoor/models
 embryoseg/utils
