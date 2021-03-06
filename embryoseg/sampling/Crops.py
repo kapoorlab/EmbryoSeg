@@ -34,13 +34,14 @@ class Crops(object):
                       patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
                       n_patches_per_image = self.n_patches_per_image,
                       patch_filter  = None,
+                      normalization = None,
                       save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
                       )
-
+  
                       count = 0
                       for i in range(0,X.shape[0]):
                               image = X[i]
                               mask = Y[i]
-                              imwrite(self.BaseDir + '/CropRaw/' + str(count) + '.tif', image[...,0] )
-                              imwrite(self.BaseDir + '/CropRealMask/' + str(count) + '.tif', mask[...,0].astype('uint16') )
+                              imwrite(self.BaseDir + '/CropRaw/' + str(count) + '.tif', image.astype('float32') )
+                              imwrite(self.BaseDir + '/CropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
                               count = count + 1
