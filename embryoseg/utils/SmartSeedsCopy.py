@@ -91,7 +91,7 @@ class SmartSeeds3D(object):
 
 
 
-     def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, TrainUNET = True, TrainSTAR = True, GenerateNPZ = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
+     def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, TrainUNET = True, TrainSTAR = True, GenerateNPZ = True, GenerateStarNPZ = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
          
          
          
@@ -101,7 +101,7 @@ class SmartSeeds3D(object):
          self.DownsampleFactor = DownsampleFactor
          self.model_dir = model_dir
          self.GenerateNPZ = GenerateNPZ
-         
+         self.GenerateStarNPZ = GenerateStarNPZ
          self.TrainUNET = TrainUNET
          self.TrainSTAR = TrainSTAR
          self.copy_model_dir = copy_model_dir
@@ -150,7 +150,7 @@ class SmartSeeds3D(object):
                          if self.labelMe == True:
                                  #Read Label images
                                  x = ReadInt(self.files[i])
-                                 x[x==1] = 0              
+                                
                    
                          return x
         
@@ -164,15 +164,18 @@ class SmartSeeds3D(object):
                     Path(self.BaseDir + '/BinaryMask/').mkdir(exist_ok=True)
                     Path(self.BaseDir + '/RealMask/').mkdir(exist_ok=True)
                     RealMask = sorted(glob.glob(self.BaseDir + '/RealMask/' + '*.tif'))
+                    
 
-
-                    CropRaw = sorted(glob.glob(self.BaseDir + '/CropRaw/' + '*.tif'))
-                    CropRealMask = sorted(glob.glob(self.BaseDir + '/CropRealMask/' + '*.tif'))
-                    CropValRaw = sorted(glob.glob(self.BaseDir + '/CropValRaw/' + '*.tif'))
-                    CropValRealMask = sorted(glob.glob(self.BaseDir + '/CropValRealMask/' + '*.tif'))
                      
-                  
-                   
+                    ValRaw = sorted(glob.glob(self.BaseDir + '/ValRaw/' + '*.tif'))
+                    ValRealMask = sorted(glob.glob(self.BaseDir + '/ValRealMask/' + '*.tif'))
+                    
+
+
+                    Path(self.BaseDir + '/PatchedRealMask/').mkdir(exist_ok=True)
+                    Path(self.BaseDir + '/PatchedRaw/').mkdir(exist_ok=True)
+                    Path(self.BaseDir + '/PatchedValRealMask/').mkdir(exist_ok=True)
+                    Path(self.BaseDir + '/PatchedValRaw/').mkdir(exist_ok=True)
 
                     print('Instance segmentation masks:', len(RealMask))
                     if len(RealMask)== 0:
@@ -230,7 +233,21 @@ class SmartSeeds3D(object):
                       save_file           = self.BaseDir + self.NPZfilename + '.npz',
                       )
                       
-                   
+                    if self.GenerateStarNPZ:
+                        
+                      raw_data = RawData.from_folder (
+                      basepath    = self.BaseDir,
+                      source_dirs = ['Raw/'],
+                      target_dir  = 'RealMask/',
+                      axes        = 'ZYX',
+                       )
+                    
+                      X, Y, XY_axes = create_patches (
+                      raw_data            = raw_data,
+                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
+                      n_patches_per_image = self.n_patches_per_image,
+                      save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
+                      )  
                     
                     # Training UNET model
                     if self.TrainUNET:
@@ -273,15 +290,42 @@ class SmartSeeds3D(object):
                             print('Training StarDistModel model with unet backbone')
                             self.axis_norm = (0,1,2)
                             
+                            load_path = self.BaseDir + self.NPZfilename + 'Star' + '.npz'
+                            #self.X_trn = self.DataSequencer(Raw, self.axis_norm, Normalize = True, labelMe = False)
+                            #self.Y_trn = self.DataSequencer(RealMask, self.axis_norm, Normalize = False, labelMe = True)
                             
-                            self.X_trn = self.DataSequencer(CropRaw, self.axis_norm, Normalize = True, labelMe = False)
-                            self.Y_trn = self.DataSequencer(CropRealMask, self.axis_norm, Normalize = False, labelMe = True)
-                            
-                            self.X_val = self.DataSequencer(CropValRaw, self.axis_norm, Normalize = True, labelMe = False)
-                            self.Y_val = self.DataSequencer(CropValRealMask, self.axis_norm, Normalize = False, labelMe = True)
+                            #self.X_val = self.DataSequencer(ValRaw, self.axis_norm, Normalize = True, labelMe = False)
+                            #self.Y_val = self.DataSequencer(ValRealMask, self.axis_norm, Normalize = False, labelMe = True)
                            
+                            (self.X_trn,self.Y_trn), (self.X_val, self.Y_val), axes = load_training_data(load_path, validation_split=0.1, verbose=True)
+                            print(self.X_val.shape, self.Y_val.shape)
+                            self.X_trn = self.X_trn[...,0]
+                            self.X_val = self.X_val[...,0]
+                            self.Y_trn = self.Y_trn[...,0]
+                            self.Y_val = self.Y_val[...,0]
+                            countRaw = 0
+                            for i in range(0,self.X_val.shape[0]):
+
+                                   imwrite((self.BaseDir + '/PatchedValRaw/' + str(countRaw) + '.tif'), self.X_val[i,:].astype('float32'))
+                                   countRaw = countRaw + 1
+
+                            for i in range(0,self.X_trn.shape[0]):
+
+                                   imwrite((self.BaseDir + '/PatchedRaw/' + str(countRaw) + '.tif'), self.X_trn[i,:].astype('float32'))
+                                   countRaw = countRaw + 1
+
+                            countReal = 0
+                            for i in range(0,self.Y_val.shape[0]):
+
+                                   imwrite((self.BaseDir + '/PatchedValRealMask/' + str(countReal) + '.tif'), self.Y_val[i,:].astype('uint16'))
+                                   countReal = countReal + 1
                             
-                          
+                            for i in range(0,self.Y_trn.shape[0]):
+
+                                   imwrite((self.BaseDir + '/PatchedRealMask/' + str(countReal) + '.tif'), self.Y_trn[i,:].astype('uint16'))
+                                   countReal = countReal + 1
+
+                            
                             print(Config3D.__doc__)
                             
                             anisotropy = (1,1,1)
@@ -291,7 +335,7 @@ class SmartSeeds3D(object):
                                   anisotropy = anisotropy,
                                   backbone='unet',
                                   train_epochs = self.epochs,
-                                  
+                                  train_steps_per_epoch =50,
                                   train_learning_rate = self.learning_rate,
                                   unet_n_depth = self.depth,
                                   train_checkpoint = self.model_dir + self.model_name +'.h5',
@@ -299,11 +343,11 @@ class SmartSeeds3D(object):
                                   train_patch_size = (self.PatchZ, self.PatchX, self.PatchY ),
                                   train_batch_size = self.batch_size,
                                   unet_n_filter_base = self.startfilter,
-                                  train_dist_loss = 'mse',
+                                  train_dist_loss = 'mae',
                                   grid         = (1,4,4),
                                   use_gpu      = self.use_gpu,
                                   n_channel_in = 1,
-                                  train_sample_cache = False
+                                  train_sample_cache = True
                                   )
                             
                             print(conf)
@@ -340,7 +384,7 @@ class SmartSeeds3D(object):
                                 print('Loading checkpoint model')
                                 Starmodel.load_weights(self.model_dir + self.model_name + '/' + 'weights_best.h5')     
                                  
-                            historyStar = Starmodel.train(self.X_trn, self.Y_trn, validation_data=(self.X_val,self.Y_val), epochs = self.epochs)
+                            #historyStar = Starmodel.train(self.X_trn, self.Y_trn, validation_data=(self.X_val,self.Y_val), epochs = self.epochs)
                             
         
         
