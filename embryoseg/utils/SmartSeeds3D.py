@@ -146,12 +146,13 @@ class SmartSeeds3D(object):
                         #Read Raw images
                          if self.Normalize == True:
                                  x = ReadFloat(self.files[i]) 
-                                 x = normalize(x,1,99.8,axis= self.axis_norm) 
+                                 x = normalize(x,1,99.8,axis= self.axis_norm)
+                                 x = x[0,:]
                          if self.labelMe == True:
                                  #Read Label images
                                  x = ReadInt(self.files[i])
                                  x[x==1] = 0              
-                   
+                                 x = x[0,:]
                          return x
         
         

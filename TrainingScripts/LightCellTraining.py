@@ -83,7 +83,7 @@ TrainSTAR = True
 
 
 
-SmartSeeds3D(BaseDir = Data_dir, NPZfilename = NPZ_filename, model_name = Model_Name, model_dir = Model_dir, n_patches_per_image = n_patches_per_image, GenerateStarNPZ = GenerateStarNPZ, TrainUNET = TrainUNET, TrainSTAR = TrainSTAR, PatchX= PatchX, PatchY= PatchY, PatchZ = PatchZ,  use_gpu = use_gpu_opencl,  batch_size = batch_size, depth = NetworkDepth, kern_size = Kernel, startfilter = startfilter, n_rays = Rays, epochs = Epochs, learning_rate = LearningRate)
+SmartSeeds3D(BaseDir = Data_dir, NPZfilename = NPZ_filename, model_name = Model_Name, model_dir = Model_dir, n_patches_per_image = n_patches_per_image, GenerateNPZ = GenerateNPZ, TrainUNET = TrainUNET, TrainSTAR = TrainSTAR, PatchX= PatchX, PatchY= PatchY, PatchZ = PatchZ,  use_gpu = use_gpu_opencl,  batch_size = batch_size, depth = NetworkDepth, kern_size = Kernel, startfilter = startfilter, n_rays = Rays, epochs = Epochs, learning_rate = LearningRate)
 
 
 # In[ ]:
