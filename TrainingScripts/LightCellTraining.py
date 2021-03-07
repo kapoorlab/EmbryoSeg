@@ -5,7 +5,7 @@
 
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 import sys
 sys.path.append('/home/vkapoor/EmbryoSeg/embryoseg')
 
@@ -32,7 +32,7 @@ os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining//'
 NPZ_filename = 'GuignardLabAscadianEmbryo'
 Model_dir = '/data/u934/service_imagerie/v_kapoor/CurieDeepLearningModels/LightSheetTraining/'
-Model_Name = 'GuignardLabAscadianEmbryo'
+Model_Name = 'DeepGuignardLabAscadianEmbryo'
 
 
 # # In this cell choose the network training parameters for the Neural Network
@@ -62,7 +62,7 @@ Model_Name = 'GuignardLabAscadianEmbryo'
 
 
 #Network training parameters
-NetworkDepth = 3
+NetworkDepth = 5
 Epochs = 200
 LearningRate = 1.0E-4
 batch_size = 4

@@ -18,8 +18,8 @@ class Crops(object):
 
 
                     
-                      Path(self.BaseDir + '/CropRaw/').mkdir(exist_ok=True)
-                      Path(self.BaseDir + '/CropRealMask/').mkdir(exist_ok=True)
+                      Path(self.BaseDir + '/BigCropRaw/').mkdir(exist_ok=True)
+                      Path(self.BaseDir + '/BigCropRealMask/').mkdir(exist_ok=True)
                     
 
                       raw_data = RawData.from_folder (
@@ -35,13 +35,13 @@ class Crops(object):
                       n_patches_per_image = self.n_patches_per_image,
                       patch_filter  = None,
                       normalization = None,
-                      save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
+                      save_file           = self.BaseDir + self.NPZfilename + 'BigStar' + '.npz',
                       )
   
                       count = 0
                       for i in range(0,X.shape[0]):
                               image = X[i]
                               mask = Y[i]
-                              imwrite(self.BaseDir + '/CropRaw/' + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.BaseDir + '/CropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
+                              imwrite(self.BaseDir + '/BigCropRaw/' + str(count) + '.tif', image.astype('float32') )
+                              imwrite(self.BaseDir + '/BigCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
                               count = count + 1
