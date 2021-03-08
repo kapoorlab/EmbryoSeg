@@ -14,14 +14,32 @@ class Crops(object):
               self.PatchX = PatchX
               self.n_patches_per_image = n_patches_per_image
               self.MakeCrops()  
+              
        def MakeCrops(self):
 
 
-                    
+                      #For training Data of U-Net
+                      
+                      binary_raw_data = RawData.from_folder (
+                      basepath    = self.BaseDir,
+                      source_dirs = ['Raw/'],
+                      target_dir  = 'BinaryMask/',
+                      axes        = 'ZYX',
+                       )
+
+                      X, Y, XY_axes = create_patches (
+                      raw_data            = binary_raw_data,
+                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
+                      n_patches_per_image = self.n_patches_per_image,
+                      save_file           = self.BaseDir + self.NPZfilename + '.npz',
+                      )
+           
+           
+           
+                      #For training Data of Stardist
                       Path(self.BaseDir + '/BigCropRaw/').mkdir(exist_ok=True)
                       Path(self.BaseDir + '/BigCropRealMask/').mkdir(exist_ok=True)
-                    
-
+                      
                       raw_data = RawData.from_folder (
                       basepath    = self.BaseDir,
                       source_dirs = ['Raw/'],
@@ -45,3 +63,31 @@ class Crops(object):
                               imwrite(self.BaseDir + '/BigCropRaw/' + str(count) + '.tif', image.astype('float32') )
                               imwrite(self.BaseDir + '/BigCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
                               count = count + 1
+ 
+                      #For validation Data of Stardist
+                      Path(self.BaseDir + '/BigValCropRaw/').mkdir(exist_ok=True)
+                      Path(self.BaseDir + '/BigValCropRealMask/').mkdir(exist_ok=True)
+                      
+                      val_raw_data = RawData.from_folder (
+                      basepath    = self.BaseDir,
+                      source_dirs = ['ValRaw/'],
+                      target_dir  = 'ValRealMask/',
+                      axes        = 'ZYX',
+                       )
+
+                      X_val, Y_val, XY_axes = create_patches (
+                      raw_data            = val_raw_data,
+                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
+                      n_patches_per_image = self.n_patches_per_image,
+                      patch_filter  = None,
+                      normalization = None,
+                      save_file           = self.BaseDir + self.NPZfilename + 'BigStarValidation' + '.npz',
+                      )
+  
+                      count = 0
+                      for i in range(0,X_val.shape[0]):
+                              image = X_val[i]
+                              mask = Y_val[i]
+                              imwrite(self.BaseDir + '/BigValCropRaw/' + str(count) + '.tif', image.astype('float32') )
+                              imwrite(self.BaseDir + '/BigValCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
+                              count = count + 1                                      
