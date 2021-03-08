@@ -6,10 +6,11 @@ import glob
 from skimage.morphology import label 
 import os
 import cv2
+from random import sample
 from scipy.ndimage.filters import minimum_filter, maximum_filter
 class Crops(object):
 
-       def __init__(self, BaseDir, NPZfilename, PatchZ, PatchY, PatchX, n_patches_per_image):
+       def __init__(self, BaseDir, NPZfilename, PatchZ, PatchY, PatchX, n_patches_per_image, pattern = '*.tif', validation_split = 0.1):
 
               self.BaseDir = BaseDir
               self.NPZfilename = NPZfilename
@@ -17,6 +18,8 @@ class Crops(object):
               self.PatchY = PatchY
               self.PatchX = PatchX
               self.n_patches_per_image = n_patches_per_image
+              self.pattern = pattern
+              self.validation_split = validation_split
               self.MakeCrops()  
               
        def MakeCrops(self):
@@ -24,18 +27,27 @@ class Crops(object):
            
                       # Create training data given either labels or binary image was the input
                       
-                      Path(self.BaseDir + '/BinaryMask/').mkdir(exist_ok=True)
-                      Path(self.BaseDir + '/RealMask/').mkdir(exist_ok=True)
+                      self.LabelDir = self.BaseDir + '/RealMask/'
+                      self.BinaryDir = self.BaseDir + '/BinaryMask/'
+                      
+                      self.CropRawDir = self.BaseDir + '/BigCropRaw/'
+                      self.CropLabelDir = self.BaseDir + '/BigCropRealMask/'
+                      
+                      self.CropValRawDir = self.BaseDir + '/BigCropValRaw/'
+                      self.CropValLabelDir = self.BaseDir + '/BigCropValRealMask/'
+                      
+                      Path(self.BinaryDir).mkdir(exist_ok=True)
+                      Path(self.LabelDir).mkdir(exist_ok=True)
                     
-                      Raw = sorted(glob.glob(self.BaseDir + '/Raw/' + '*.tif'))
-                      RealMask = sorted(glob.glob(self.BaseDir + '/RealMask/' + '*.tif'))
-                      Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
+                     
+                      RealMask = sorted(glob.glob(self.LabelDir + self.pattern))
+                      Mask = sorted(glob.glob(self.BinaryDir + self.pattern))
 
                       print('Instance segmentation masks:', len(RealMask))
                       if len(RealMask)== 0:
                         
                         print('Making labels')
-                        Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
+                        Mask = sorted(glob.glob(self.BinaryDir + self.pattern))
                         
                         for fname in Mask:
                     
@@ -45,14 +57,14 @@ class Crops(object):
                     
                            Binaryimage = label(image) 
                     
-                           imwrite((self.BaseDir + '/RealMask/' + Name + '.tif'), Binaryimage.astype('uint16'))
+                           imwrite((self.LabelDir + Name + self.pattern), Binaryimage.astype('uint16'))
                            
                            
                       print('Semantic segmentation masks:', len(Mask))
                       if len(Mask) == 0:
                           
                           print('Generating Binary images')
-                          RealfilesMask = sorted(glob.glob(self.BaseDir + '/RealMask/'+ '*tif'))  
+                          RealfilesMask = sorted(glob.glob(self.LabelDir + self.pattern))  
                 
                 
                           for fname in RealfilesMask:
@@ -66,7 +78,7 @@ class Crops(object):
                        
                             Binaryimage = image > 0
                     
-                            imwrite((self.BaseDir + '/BinaryMask/' + Name + '.tif'), Binaryimage.astype('uint16'))     
+                            imwrite((self.BinaryDir + Name + self.pattern), Binaryimage.astype('uint16'))     
 
 
                      
@@ -92,8 +104,8 @@ class Crops(object):
            
            
                       #For training Data of Stardist
-                      Path(self.BaseDir + '/BigCropRaw/').mkdir(exist_ok=True)
-                      Path(self.BaseDir + '/BigCropRealMask/').mkdir(exist_ok=True)
+                      Path(self.CropRawDir).mkdir(exist_ok=True)
+                      Path(self.CropLabelDir).mkdir(exist_ok=True)
                       
                       raw_data = RawData.from_folder (
                       basepath    = self.BaseDir,
@@ -115,38 +127,49 @@ class Crops(object):
                       for i in range(0,X.shape[0]):
                               image = X[i]
                               mask = Y[i]
-                              imwrite(self.BaseDir + '/BigCropRaw/' + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.BaseDir + '/BigCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
+                              imwrite(self.CropRawDir + str(count) + self.pattern, image.astype('float32') )
+                              imwrite(self.CropLabelDir + str(count) + self.pattern, mask.astype('uint16') )
                               count = count + 1
  
                       #For validation Data of Stardist
-                      Path(self.BaseDir + '/BigValCropRaw/').mkdir(exist_ok=True)
-                      Path(self.BaseDir + '/BigValCropRealMask/').mkdir(exist_ok=True)
+                      Path(self.CropValRawDir).mkdir(exist_ok=True)
+                      Path(self.CropValLabelDir).mkdir(exist_ok=True)
                       
-                      val_raw_data = RawData.from_folder (
-                      basepath    = self.BaseDir,
-                      source_dirs = ['ValRaw/'],
-                      target_dir  = 'ValRealMask/',
-                      axes        = 'ZYX',
-                       )
-
-                      X_val, Y_val, XY_axes = create_patches (
-                      raw_data            = val_raw_data,
-                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
-                      n_patches_per_image = self.n_patches_per_image,
-                      patch_filter  = None,
-                      normalization = None,
-                      save_file           = self.BaseDir + self.NPZfilename + 'BigStarValidation' + '.npz',
-                      )
-  
-                      count = 0
-                      for i in range(0,X_val.shape[0]):
-                              image = X_val[i]
-                              mask = Y_val[i]
-                              imwrite(self.BaseDir + '/BigValCropRaw/' + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.BaseDir + '/BigValCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1          
+                      p = Path(self.CropRawDir)
+                      image_names = [f.name for f in ( p ).glob(self.pattern)]
+                      shuffled = sample(image_names, len(image_names))
+                      vallength = int(self.validation_split * X.shape[0])
+                      image_names = shuffled[:vallength]
+                      
+                      Raw_path = os.path.join(self.CropRawDir, self.pattern)
+                      filesRaw = glob.glob(Raw_path)
+                      filesRaw.sort
+                      
+                      Label_path = os.path.join(self.CropLabelDir, self.pattern)
+                      filesLabel = glob.glob(Label_path)
+                      filesLabel.sort
+                      
+                      for fname in filesRaw:
+                          
+                          
+                          Name = os.path.basename(os.path.splitext(fname)[0])
+                          
+                          
+                          for secfname in filesLabel:
                               
+                              SecName = os.path.basename(os.path.splitext(fname)[0])
+                              
+                              if Name == SecName and Name in image_names:
+                                  
+                                  
+                                        imwrite(self.CropValRawDir + Name + self.pattern, image.astype('float32') )
+                                        imwrite(self.CropValLabelDir + Name + self.pattern, mask.astype('uint16') )
+                                  
+                                        #Remove the validation images from the training set
+                                        os.remove(self.CropRawDir + Name + self.pattern)
+                                        os.remove(self.CropLabelDir + Name + self.pattern)
+                          
+
                               
                               
                               
