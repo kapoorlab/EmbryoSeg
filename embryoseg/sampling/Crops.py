@@ -2,7 +2,11 @@ import sys
 from csbdeep.data import RawData, create_patches
 from tifffile import imread, imwrite
 from pathlib import Path
-
+import glob
+from skimage.morphology import label 
+import os
+import cv2
+from scipy.ndimage.filters import minimum_filter, maximum_filter
 class Crops(object):
 
        def __init__(self, BaseDir, NPZfilename, PatchZ, PatchY, PatchX, n_patches_per_image):
@@ -16,6 +20,57 @@ class Crops(object):
               self.MakeCrops()  
               
        def MakeCrops(self):
+
+           
+                      # Create training data given either labels or binary image was the input
+                      
+                      Path(self.BaseDir + '/BinaryMask/').mkdir(exist_ok=True)
+                      Path(self.BaseDir + '/RealMask/').mkdir(exist_ok=True)
+                    
+                      Raw = sorted(glob.glob(self.BaseDir + '/Raw/' + '*.tif'))
+                      RealMask = sorted(glob.glob(self.BaseDir + '/RealMask/' + '*.tif'))
+                      Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
+
+                      print('Instance segmentation masks:', len(RealMask))
+                      if len(RealMask)== 0:
+                        
+                        print('Making labels')
+                        Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
+                        
+                        for fname in Mask:
+                    
+                           image = imread(fname)
+                    
+                           Name = os.path.basename(os.path.splitext(fname)[0])
+                    
+                           Binaryimage = label(image) 
+                    
+                           imwrite((self.BaseDir + '/RealMask/' + Name + '.tif'), Binaryimage.astype('uint16'))
+                           
+                           
+                      print('Semantic segmentation masks:', len(Mask))
+                      if len(Mask) == 0:
+                          
+                          print('Generating Binary images')
+                          RealfilesMask = sorted(glob.glob(self.BaseDir + '/RealMask/'+ '*tif'))  
+                
+                
+                          for fname in RealfilesMask:
+                    
+                            image = ReadFloat(fname)
+                    
+                            Name = os.path.basename(os.path.splitext(fname)[0])
+                            
+                            image = minimum_filter(image, (1,4,4))
+                            image = maximum_filter(image, (1,4,4))
+                       
+                            Binaryimage = image > 0
+                    
+                            imwrite((self.BaseDir + '/BinaryMask/' + Name + '.tif'), Binaryimage.astype('uint16'))     
+
+
+                     
+                      #Create some validation images for stardist
 
 
                       #For training Data of U-Net
@@ -90,4 +145,39 @@ class Crops(object):
                               mask = Y_val[i]
                               imwrite(self.BaseDir + '/BigValCropRaw/' + str(count) + '.tif', image.astype('float32') )
                               imwrite(self.BaseDir + '/BigValCropRealMask/' + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1                                      
+                              count = count + 1          
+                              
+                              
+                              
+                              
+                              
+def ReadFloat(fname):
+
+    return imread(fname).astype('float32')         
+         
+
+def ReadInt(fname):
+
+    return imread(fname).astype('uint16')         
+
+
+
+         
+def DownsampleData(image, DownsampleFactor):
+                    
+
+
+                    scale_percent = int(100/DownsampleFactor) # percent of original size
+                    width = int(image.shape[2] * scale_percent / 100)
+                    height = int(image.shape[1] * scale_percent / 100)
+                    dim = (width, height)
+                    smallimage = np.zeros([image.shape[0],  height,width])
+                    for i in range(0, image.shape[0]):
+                          # resize image
+                          smallimage[i,:] = cv2.resize(image[i,:].astype('float32'), dim)         
+         
+                    return smallimage                              
+                              
+                              
+                              
+                              
