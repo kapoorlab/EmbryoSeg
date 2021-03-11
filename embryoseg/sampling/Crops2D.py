@@ -1,3 +1,11 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 11 13:58:06 2021
+
+@author: vkapoor
+"""
+
 from csbdeep.data import RawData, create_patches
 from tifffile import imread, imwrite
 from pathlib import Path
@@ -7,13 +15,13 @@ import os
 import cv2
 from random import sample
 from scipy.ndimage.filters import minimum_filter, maximum_filter
-class Crops(object):
+class Crops2D(object):
 
-       def __init__(self, BaseDir, NPZfilename, PatchZ, PatchY, PatchX, n_patches_per_image, validation_split = 0.1):
+       def __init__(self, BaseDir, NPZfilename, PatchY, PatchX, n_patches_per_image, validation_split = 0.1):
 
               self.BaseDir = BaseDir
               self.NPZfilename = NPZfilename
-              self.PatchZ = PatchZ
+             
               self.PatchY = PatchY
               self.PatchX = PatchX
               self.n_patches_per_image = n_patches_per_image
@@ -71,8 +79,6 @@ class Crops(object):
                     
                             Name = os.path.basename(os.path.splitext(fname)[0])
                             
-                            image = minimum_filter(image, (1,4,4))
-                            image = maximum_filter(image, (1,4,4))
                        
                             Binaryimage = image > 0
                     
@@ -94,7 +100,7 @@ class Crops(object):
 
                       X, Y, XY_axes = create_patches (
                       raw_data            = binary_raw_data,
-                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
+                      patch_size          = (self.PatchY,self.PatchX),
                       n_patches_per_image = self.n_patches_per_image,
                       save_file           = self.BaseDir + self.NPZfilename + '.npz',
                       )
@@ -114,7 +120,7 @@ class Crops(object):
 
                       X, Y, XY_axes = create_patches (
                       raw_data            = raw_data,
-                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
+                      patch_size          = (self.PatchY,self.PatchX),
                       n_patches_per_image = self.n_patches_per_image,
                       patch_filter  = None,
                       normalization = None,
@@ -125,8 +131,8 @@ class Crops(object):
                       for i in range(0,X.shape[0]):
                               image = X[i]
                               mask = Y[i]
-                              imwrite(self.CropRawDir + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.CropLabelDir + str(count) + '.tif', mask.astype('uint16') )
+                              imwrite(self.CropRawDir + str(count) + self.pattern, image.astype('float32') )
+                              imwrite(self.CropLabelDir + str(count) + self.pattern, mask.astype('uint16') )
                               count = count + 1
  
                       #For validation Data of Stardist
@@ -160,12 +166,12 @@ class Crops(object):
                               if Name == SecName and Name in image_names:
                                   
                                   
-                                        imwrite(self.CropValRawDir + Name + '.tif', image.astype('float32') )
-                                        imwrite(self.CropValLabelDir + Name + '.tif', mask.astype('uint16') )
+                                        imwrite(self.CropValRawDir + Name + self.pattern, image.astype('float32') )
+                                        imwrite(self.CropValLabelDir + Name + self.pattern, mask.astype('uint16') )
                                   
                                         #Remove the validation images from the training set
-                                        os.remove(self.CropRawDir + Name + '.tif')
-                                        os.remove(self.CropLabelDir + Name + '.tif')
+                                        os.remove(self.CropRawDir + Name + '*.tif')
+                                        os.remove(self.CropLabelDir + Name + '*.tif')
                           
 
                               
@@ -202,3 +208,5 @@ def DownsampleData(image, DownsampleFactor):
                               
                               
                               
+
+

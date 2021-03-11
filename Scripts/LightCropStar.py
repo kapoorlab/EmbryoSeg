@@ -1,14 +1,14 @@
-import os
+
 import sys
-sys.path.append('/home/vkapoor/EmbryoSeg/embryoseg')
+sys.path.append('../../')
 from sampling import Crops
 #from embryoseg.sampling import Crops
 
 
-Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining/'
-NPZ_filename = 'BigGuignardLabAscadianEmbryo'
+Data_dir = '/home/sancere/Kepler/Lucas2Varun/1_StarWat_Training/DrosophilaMembraneData/'
+NPZ_filename = 'DrosophilaMembrane'
 
-PatchX = 256
+PatchX = 384
 PatchY = 256
 PatchZ = 128
 n_patches_per_image = 10

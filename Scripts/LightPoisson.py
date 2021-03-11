@@ -8,8 +8,8 @@ from tifffile import imread, imwrite
 #from embryoseg.sampling import Crops
 
 
-Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining/Raw/'
-Noisy_Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining/NoisyRaw/'
+Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining/CropRaw/'
+Noisy_Data_dir = '/data/u934/service_imagerie/v_kapoor/CurieTrainingDatasets/LightSheetTraining/NoisyCropRaw/'
 
 Path(Noisy_Data_dir).mkdir(exist_ok=True)
 
