@@ -6,11 +6,10 @@ embryoseg.egg-info/SOURCES.txt
 embryoseg.egg-info/dependency_links.txt
 embryoseg.egg-info/requires.txt
 embryoseg.egg-info/top_level.txt
-embryoseg/stardist_kapoor/__init__.py
-embryoseg/stardist_kapoor/models/__init__.py
-embryoseg/stardist_kapoor/models/base.py
-embryoseg/stardist_kapoor/models/model2d.py
-embryoseg/stardist_kapoor/models/model3d.py
+embryoseg/sampling/Crops.py
+embryoseg/sampling/Crops2D.py
+embryoseg/sampling/NPZCrops.py
+embryoseg/sampling/__init__.py
 embryoseg/utils/SmartSeeds2D.py
 embryoseg/utils/SmartSeeds3D.py
 embryoseg/utils/__init__.py

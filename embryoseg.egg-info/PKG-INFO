@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: embryoseg
-Version: 1.2.2
+Version: 1.2.3
 Summary: SmartSeed Segmentation for animal embryonic cells.
 Home-page: https://github.com/kapoorlab/EmbryoSeg/
 Author: Varun Kapoor
@@ -44,5 +44,5 @@ Classifier: Natural Language :: English
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python
-Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.7
 Description-Content-Type: text/markdown

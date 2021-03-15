@@ -7,7 +7,7 @@ with open('README.md') as f:
 
 
 setup(name="embryoseg",
-      version='1.2.2',
+      version='1.2.3',
       author='Varun Kapoor',
       author_email='randomaccessiblekapoor@gmail.com',
       url='https://github.com/kapoorlab/EmbryoSeg/',
@@ -21,5 +21,5 @@ setup(name="embryoseg",
                    'License :: OSI Approved :: MIT License',
                    'Operating System :: OS Independent',
                    'Programming Language :: Python',
-                   'Programming Language :: Python :: 3.9',
+                   'Programming Language :: Python :: 3.7',
                    ])
