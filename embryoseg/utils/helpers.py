@@ -773,8 +773,6 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
 
 
-import matplotlib.pyplot as plt
-from csbdeep.utils import plot_some
 def plot3D(ImageDir, ResultsDir, time = 0, Z = 0, showMany = -1):
     
     Raw_path = os.path.join(ImageDir, '*tif')
@@ -799,8 +797,6 @@ def plot3D(ImageDir, ResultsDir, time = 0, Z = 0, showMany = -1):
                 ndim = len(image.shape)
                 Name = os.path.basename(os.path.splitext(fname)[0])
                 ResName = os.path.basename(os.path.splitext(secfname)[0])
-                print(Name)
-                print(ResName, totalfiles)
                 if Name == ResName:
                 
                       Resimage = imread(secfname)
