@@ -695,7 +695,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
           
           SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
           if StarModel is not None:
-              SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection, threshold = threshold)
+              SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
               #Upsample images back to original size
               SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
               image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -723,7 +723,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
         
         SizedMask[:, :Mask.shape[1], :Mask.shape[2]]  = Mask
         if StarModel is not None:
-            SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, n_tiles, threshold = threshold)
+            SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, n_tiles)
             #Upsample images back to original size
             SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
             image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -836,7 +836,7 @@ n_tiles = (1,2,2), smartcorrection = None,  start = 0, end = -1, sizeY = None, s
     imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16'))
     
     
-    SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
+    SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask)
     #Upsample images back to original size
     SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
     image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -907,7 +907,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
           if StarModel is not None:
               for i in tqdm(range(0, image.shape[0])):
-                      SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image[i,:], filtersize), StarModel, n_tiles, MaskImage = Mask[i,:], smartcorrection = smartcorrection, threshold = threshold)
+                      SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image[i,:], filtersize), StarModel, n_tiles, MaskImage = Mask[i,:], smartcorrection = smartcorrection)
                       #Upsample images back to original size
                       SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
                       image[i,:] = DownsampleData(image[i,:], 1.0/DownsampleFactor)
@@ -931,7 +931,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
         if StarModel is not None:
             for i in tqdm(range(0, image.shape[0])):
-                    SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image[i,:],filtersize), StarModel, n_tiles, threshold = threshold)
+                    SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image[i,:],filtersize), StarModel, n_tiles)
                     #Upsample images back to original size
                     SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
                     image[i,:]  = DownsampleData(image[i,:] , 1.0/DownsampleFactor)
@@ -1740,16 +1740,15 @@ def WatershedwithMask(Image, Label,mask, grid):
     
 def iou3D(boxA, centroid):
     
-    ndim = len(centroid.shape)
+    ndim = len(centroid)
     inside = False
     
-    Condition = [Conditioncheck()]
-    
     Condition = [Conditioncheck(centroid, boxA, p, ndim) for p in range(0,ndim)]
-    
+    print('First', Condition)
         
-    inside = any(Condition)
+    inside = all(Condition)
     
+    print('Second', inside)
     
     return inside
 
@@ -1758,7 +1757,6 @@ def Conditioncheck(centroid, boxA, p, ndim):
       condition = False
     
       if centroid[p] >= boxA[p] and centroid[p] <= boxA[p + ndim]:
-              
           
            condition = True
            
