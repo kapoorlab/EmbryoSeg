@@ -792,15 +792,13 @@ def EmbryoSegFunction2D(ImageDir, SaveDir,fname,  UnetModel, StarModel, min_size
     image = DownsampleData2D(image, DownsampleFactor)
     
     Mask = UNETPrediction(gaussian_filter(image, filtersize), UnetModel, min_size_mask, n_tiles, 'YX')
-    
+    imwrite((UNETResults + Name+ '.tif' ) , Mask.astype('uint16')) 
     SmartSeeds, _, StarImage = STARPrediction(gaussian_filter(image, filtersize), StarModel, min_size, n_tiles, MaskImage = Mask, smartcorrection = smartcorrection, UseProbability = UseProbability)
     #Upsample downsampled results
     image = DownsampleData2D(image, 1.0/DownsampleFactor)
     Mask = DownsampleData2D(Mask, 1.0/DownsampleFactor)
     SmartSeeds = DownsampleData2D(SmartSeeds, 1.0/DownsampleFactor)
     imwrite((SmartSeedsResults + Name+ '.tif' ) , SmartSeeds.astype('uint16'))
-    imwrite((UNETResults + Name+ '.tif' ) , Mask.astype('uint16'))   
-    
  
     return SmartSeeds, Mask
     
@@ -835,6 +833,9 @@ n_tiles = (1,2,2), smartcorrection = None,  start = 0, end = -1, sizeY = None, s
     
     Mask = UNETPrediction3D(gaussian_filter(image, filtersize), UnetModel, n_tiles, 'ZYX')
     SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
+    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16'))
+    
+    
     SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
     #Upsample images back to original size
     SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
@@ -843,7 +844,7 @@ n_tiles = (1,2,2), smartcorrection = None,  start = 0, end = -1, sizeY = None, s
     SizedSmartSeeds[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = SmartSeeds
  
     imwrite((SmartSeedsResults + Name+ '.tif' ) , SizedSmartSeeds.astype('uint16'))
-    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16')) 
+     
     
         
     return SizedSmartSeeds, SizedMask    
