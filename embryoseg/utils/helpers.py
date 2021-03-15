@@ -58,7 +58,7 @@ from csbdeep.utils import normalize
 import zipfile
 import btrack
 from btrack.dataio import  _PyTrackObjectFactory
-  
+from csbdeep.utils import plot_some  
 
 
 def CreateFakeZLabel(filesRaw, FakeZData_dir, FakeZLabel_dir, filesLabel, CommonName, FakeZ,SizeY, SizeX):
@@ -773,7 +773,69 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
 
 
+import matplotlib.pyplot as plt
+from csbdeep.utils import plot_some
+def plot3D(ImageDir, ResultsDir, time = 0, Z = 0, showMany = -1):
+    
+    Raw_path = os.path.join(ImageDir, '*tif')
+    filesRaw = glob.glob(Raw_path)
+    filesRaw.sort
+    
+    Result_path = os.path.join(ResultsDir, '*tif')
+    filesResult = glob.glob(Result_path)
+    filesResult.sort
+    
+    totalfiles = len(filesRaw)
+    if totalfiles > 5:
+        totalfiles = 5
+    count = 0
+    X = []
+    Y = []
+    for fname in filesRaw:
+     
+         for secfname in filesResult:
+                      
+                image = imread(fname)
+                ndim = len(image.shape)
+                Name = os.path.basename(os.path.splitext(fname)[0])
+                ResName = os.path.basename(os.path.splitext(secfname)[0])
+                print(Name)
+                print(ResName, totalfiles)
+                if Name == ResName:
+                
+                      Resimage = imread(secfname)
+                      count = count + 1
+                      print(count, ndim)
+                      if ndim == 4:
+                          X.append(image[time,Z,:])
+                          Y.append(Resimage[time,Z,:])
+                          
+                      if ndim  == 3:
+                          X.append(image[Z,:])
+                          Y.append(Resimage[Z,:])
+                      if ndim == 2:
+                          X.append(image)
+                          Y.append(Resimage)
+                          
+                if totalfiles > 1 and count%totalfiles == 0 and count > 0 :          
+                  plt.figure(figsize=(2,5 * totalfiles))
+                  plot_some(X[:totalfiles],Y[:totalfiles])
+                  plt.show()
 
+                  X = []
+                  Y = []
+                else:
+                    plt.figure(figsize=(2,5))
+                    plot_some(X[:totalfiles],Y[:totalfiles])
+                    plt.show()
+                  
+                    X = []
+                    Y = []
+         if showMany > 0 and count>= showMany:
+             break
+         
+            
+            
 
 def EmbryoSegFunction2D(ImageDir, SaveDir,fname,  UnetModel, StarModel, min_size_mask = 100, min_size = 20, DownsampleFactor = 1, n_tiles = (2,2), 
                           smartcorrection = None,  UseProbability = True, filtersize = 0):
@@ -798,6 +860,8 @@ def EmbryoSegFunction2D(ImageDir, SaveDir,fname,  UnetModel, StarModel, min_size
     image = DownsampleData2D(image, 1.0/DownsampleFactor)
     Mask = DownsampleData2D(Mask, 1.0/DownsampleFactor)
     SmartSeeds = DownsampleData2D(SmartSeeds, 1.0/DownsampleFactor)
+    
+    
     imwrite((SmartSeedsResults + Name+ '.tif' ) , SmartSeeds.astype('uint16'))
  
     return SmartSeeds, Mask
@@ -1744,11 +1808,8 @@ def iou3D(boxA, centroid):
     inside = False
     
     Condition = [Conditioncheck(centroid, boxA, p, ndim) for p in range(0,ndim)]
-    print('First', Condition)
         
     inside = all(Condition)
-    
-    print('Second', inside)
     
     return inside
 
