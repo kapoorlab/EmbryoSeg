@@ -71,7 +71,7 @@ class Crops(object):
                             image = ReadFloat(fname)
                     
                             Name = os.path.basename(os.path.splitext(fname)[0])
-                       
+                            
                             Binaryimage = image > 0
                     
                             imwrite((self.BinaryDir + Name + '.tif'), Binaryimage.astype('uint16'))     

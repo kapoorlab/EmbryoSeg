@@ -58,7 +58,7 @@ from csbdeep.utils import normalize
 import zipfile
 import btrack
 from btrack.dataio import  _PyTrackObjectFactory
-  
+from csbdeep.utils import plot_some  
 
 
 def CreateFakeZLabel(filesRaw, FakeZData_dir, FakeZLabel_dir, filesLabel, CommonName, FakeZ,SizeY, SizeX):
@@ -695,7 +695,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
           
           SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
           if StarModel is not None:
-              SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection, threshold = threshold)
+              SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
               #Upsample images back to original size
               SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
               image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -723,7 +723,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
         
         SizedMask[:, :Mask.shape[1], :Mask.shape[2]]  = Mask
         if StarModel is not None:
-            SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, n_tiles, threshold = threshold)
+            SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel, n_tiles)
             #Upsample images back to original size
             SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
             image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -773,7 +773,65 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
 
 
+def plot3D(ImageDir, ResultsDir, time = 0, Z = 0, showMany = -1):
+    
+    Raw_path = os.path.join(ImageDir, '*tif')
+    filesRaw = glob.glob(Raw_path)
+    filesRaw.sort
+    
+    Result_path = os.path.join(ResultsDir, '*tif')
+    filesResult = glob.glob(Result_path)
+    filesResult.sort
+    
+    totalfiles = len(filesRaw)
+    if totalfiles > 5:
+        totalfiles = 5
+    count = 0
+    X = []
+    Y = []
+    for fname in filesRaw:
+     
+         for secfname in filesResult:
+                      
+                image = imread(fname)
+                ndim = len(image.shape)
+                Name = os.path.basename(os.path.splitext(fname)[0])
+                ResName = os.path.basename(os.path.splitext(secfname)[0])
+                if Name == ResName:
+                
+                      Resimage = imread(secfname)
+                      count = count + 1
+                      print(count, ndim)
+                      if ndim == 4:
+                          X.append(image[time,Z,:])
+                          Y.append(Resimage[time,Z,:])
+                          
+                      if ndim  == 3:
+                          X.append(image[Z,:])
+                          Y.append(Resimage[Z,:])
+                      if ndim == 2:
+                          X.append(image)
+                          Y.append(Resimage)
+                          
+                if totalfiles > 1 and count%totalfiles == 0 and count > 0 :          
+                  plt.figure(figsize=(2,5 * totalfiles))
+                  plot_some(X[:totalfiles],Y[:totalfiles])
+                  plt.show()
 
+                  X = []
+                  Y = []
+                else:
+                    plt.figure(figsize=(2,5))
+                    plot_some(X[:totalfiles],Y[:totalfiles])
+                    plt.show()
+                  
+                    X = []
+                    Y = []
+         if showMany > 0 and count>= showMany:
+             break
+         
+            
+            
 
 def EmbryoSegFunction2D(ImageDir, SaveDir,fname,  UnetModel, StarModel, min_size_mask = 100, min_size = 20, DownsampleFactor = 1, n_tiles = (2,2), 
                           smartcorrection = None,  UseProbability = True, filtersize = 0):
@@ -792,15 +850,15 @@ def EmbryoSegFunction2D(ImageDir, SaveDir,fname,  UnetModel, StarModel, min_size
     image = DownsampleData2D(image, DownsampleFactor)
     
     Mask = UNETPrediction(gaussian_filter(image, filtersize), UnetModel, min_size_mask, n_tiles, 'YX')
-    
+    imwrite((UNETResults + Name+ '.tif' ) , Mask.astype('uint16')) 
     SmartSeeds, _, StarImage = STARPrediction(gaussian_filter(image, filtersize), StarModel, min_size, n_tiles, MaskImage = Mask, smartcorrection = smartcorrection, UseProbability = UseProbability)
     #Upsample downsampled results
     image = DownsampleData2D(image, 1.0/DownsampleFactor)
     Mask = DownsampleData2D(Mask, 1.0/DownsampleFactor)
     SmartSeeds = DownsampleData2D(SmartSeeds, 1.0/DownsampleFactor)
-    imwrite((SmartSeedsResults + Name+ '.tif' ) , SmartSeeds.astype('uint16'))
-    imwrite((UNETResults + Name+ '.tif' ) , Mask.astype('uint16'))   
     
+    
+    imwrite((SmartSeedsResults + Name+ '.tif' ) , SmartSeeds.astype('uint16'))
  
     return SmartSeeds, Mask
     
@@ -835,7 +893,10 @@ n_tiles = (1,2,2), smartcorrection = None,  start = 0, end = -1, sizeY = None, s
     
     Mask = UNETPrediction3D(gaussian_filter(image, filtersize), UnetModel, n_tiles, 'ZYX')
     SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
-    SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, smartcorrection = smartcorrection)
+    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16'))
+    
+    
+    SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask)
     #Upsample images back to original size
     SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
     image = DownsampleData(image, 1.0/DownsampleFactor)
@@ -843,7 +904,7 @@ n_tiles = (1,2,2), smartcorrection = None,  start = 0, end = -1, sizeY = None, s
     SizedSmartSeeds[:, :SmartSeeds.shape[1], :SmartSeeds.shape[2]] = SmartSeeds
  
     imwrite((SmartSeedsResults + Name+ '.tif' ) , SizedSmartSeeds.astype('uint16'))
-    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16')) 
+     
     
         
     return SizedSmartSeeds, SizedMask    
@@ -906,7 +967,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
           if StarModel is not None:
               for i in tqdm(range(0, image.shape[0])):
-                      SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image[i,:], filtersize), StarModel, n_tiles, MaskImage = Mask[i,:], smartcorrection = smartcorrection, threshold = threshold)
+                      SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image[i,:], filtersize), StarModel, n_tiles, MaskImage = Mask[i,:], smartcorrection = smartcorrection)
                       #Upsample images back to original size
                       SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
                       image[i,:] = DownsampleData(image[i,:], 1.0/DownsampleFactor)
@@ -930,7 +991,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
 
         if StarModel is not None:
             for i in tqdm(range(0, image.shape[0])):
-                    SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image[i,:],filtersize), StarModel, n_tiles, threshold = threshold)
+                    SmartSeeds, _,StarImage = STARPrediction3D(gaussian_filter(image[i,:],filtersize), StarModel, n_tiles)
                     #Upsample images back to original size
                     SmartSeeds = DownsampleData(SmartSeeds, 1.0/DownsampleFactor)
                     image[i,:]  = DownsampleData(image[i,:] , 1.0/DownsampleFactor)
@@ -1739,16 +1800,12 @@ def WatershedwithMask(Image, Label,mask, grid):
     
 def iou3D(boxA, centroid):
     
-    ndim = len(centroid.shape)
+    ndim = len(centroid)
     inside = False
     
-    Condition = [Conditioncheck()]
-    
     Condition = [Conditioncheck(centroid, boxA, p, ndim) for p in range(0,ndim)]
-    
         
-    inside = any(Condition)
-    
+    inside = all(Condition)
     
     return inside
 
@@ -1757,7 +1814,6 @@ def Conditioncheck(centroid, boxA, p, ndim):
       condition = False
     
       if centroid[p] >= boxA[p] and centroid[p] <= boxA[p + ndim]:
-              
           
            condition = True
            

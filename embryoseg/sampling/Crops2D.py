@@ -41,12 +41,7 @@ class Crops2D(object):
                       self.LabelDir = self.BaseDir + '/RealMask/'
                       self.BinaryDir = self.BaseDir + '/BinaryMask/'
                       
-                      self.CropRawDir = self.BaseDir + '/CropRaw/'
-                      self.CropLabelDir = self.BaseDir + '/CropRealMask/'
-                      
-                      self.CropValRawDir = self.BaseDir + '/CropValRaw/'
-                      self.CropValLabelDir = self.BaseDir + '/CropValRealMask/'
-                      
+
                       Raw = sorted(glob.glob(self.RawDir + '*.tif'))
                       RealMask = sorted(glob.glob(self.LabelDir + '*.tif'))
                       
@@ -104,7 +99,7 @@ class Crops2D(object):
                               basepath    = self.BaseDir,
                               source_dirs = ['Raw/'],
                               target_dir  = 'BinaryMask/',
-                              axes        = 'ZYX',
+                              axes        = 'YX',
                                )
         
                               X, Y, XY_axes = create_patches (
@@ -114,50 +109,7 @@ class Crops2D(object):
                               save_file           = self.BaseDir + self.NPZfilename + '.npz',
                               )
                    
-                              raw_data = RawData.from_folder (
-                              basepath    = self.BaseDir,
-                              source_dirs = ['Raw/'],
-                              target_dir  = 'RealMask/',
-                              axes        = 'ZYX',
-                               )
-        
-                              X, Y, XY_axes = create_patches (
-                              raw_data            = raw_data,
-                              patch_size          = (self.PatchY,self.PatchX),
-                              n_patches_per_image = self.n_patches_per_image,
-                              patch_filter  = None,
-                              normalization = None,
-                              save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
-                              )
-                              
-                      load_path = self.BaseDir + self.NPZfilename + 'Star' + '.npz'
-        
-                      (X,Y), (X_val,Y_val), axes = load_training_data(load_path, validation_split=0.1, verbose=True)
-                      #For training Data of Stardist
-                      Path(self.CropRawDir).mkdir(exist_ok=True)
-                      Path(self.CropLabelDir).mkdir(exist_ok=True)
-                      
-                              
-  
-                      count = 0
-                      for i in range(0,X.shape[0]):
-                              image = X[i]
-                              mask = Y[i]
-                              imwrite(self.CropRawDir + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.CropLabelDir + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1
- 
-                      #For validation Data of Stardist
-                      Path(self.CropValRawDir).mkdir(exist_ok=True)
-                      Path(self.CropValLabelDir).mkdir(exist_ok=True)
-                      count = 0
-                      for i in range(0,X_val.shape[0]):
-                              image = X_val[i]
-                              mask = Y_val[i]
-                              imwrite(self.CropValRawDir + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.CropValLabelDir + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1
-                      
+                             
 
                               
                               
