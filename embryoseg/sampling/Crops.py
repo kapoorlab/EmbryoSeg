@@ -29,11 +29,7 @@ class Crops(object):
                       self.LabelDir = self.BaseDir + '/RealMask/'
                       self.BinaryDir = self.BaseDir + '/BinaryMask/'
                       
-                      self.CropRawDir = self.BaseDir + '/CropRaw/'
-                      self.CropLabelDir = self.BaseDir + '/CropRealMask/'
-                      
-                      self.CropValRawDir = self.BaseDir + '/CropValRaw/'
-                      self.CropValLabelDir = self.BaseDir + '/CropValRealMask/'
+                     
                       
                       Path(self.BinaryDir).mkdir(exist_ok=True)
                       Path(self.LabelDir).mkdir(exist_ok=True)
@@ -41,7 +37,8 @@ class Crops(object):
                      
                       RealMask = sorted(glob.glob(self.LabelDir + '*.tif'))
                       Mask = sorted(glob.glob(self.BinaryDir + '*.tif'))
-
+                      
+                         
                       print('Instance segmentation masks:', len(RealMask))
                       if len(RealMask)== 0:
                         
@@ -67,14 +64,14 @@ class Crops(object):
                 
                 
                           for fname in RealfilesMask:
-                    
-                            image = ReadFloat(fname)
-                    
-                            Name = os.path.basename(os.path.splitext(fname)[0])
-                            
-                            Binaryimage = image > 0
-                    
-                            imwrite((self.BinaryDir + Name + '.tif'), Binaryimage.astype('uint16'))     
+                        
+                                    Name = os.path.basename(os.path.splitext(fname)[0])
+                                 
+                                    image = ReadFloat(fname)
+
+                                    Binaryimage = image > 0
+
+                                    imwrite((self.BinaryDir + Name + '.tif'), Binaryimage.astype('uint16'))     
 
 
                      
@@ -94,53 +91,12 @@ class Crops(object):
         
                               X, Y, XY_axes = create_patches (
                               raw_data            = binary_raw_data,
-                              patch_size          = (self.PatchY,self.PatchX),
+                              patch_size          = (self.PatchZ, self.PatchY,self.PatchX),
                               n_patches_per_image = self.n_patches_per_image,
                               save_file           = self.BaseDir + self.NPZfilename + '.npz',
                               )
                    
-                              raw_data = RawData.from_folder (
-                              basepath    = self.BaseDir,
-                              source_dirs = ['Raw/'],
-                              target_dir  = 'RealMask/',
-                              axes        = 'ZYX',
-                               )
-        
-                              X, Y, XY_axes = create_patches (
-                              raw_data            = raw_data,
-                              patch_size          = (self.PatchY,self.PatchX),
-                              n_patches_per_image = self.n_patches_per_image,
-                              patch_filter  = None,
-                              normalization = None,
-                              save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
-                              )
                               
-                      load_path = self.BaseDir + self.NPZfilename + 'Star' + '.npz'
-        
-                      (X,Y), (X_val,Y_val), axes = load_training_data(load_path, validation_split=0.1, verbose=True)
-                      #For training Data of Stardist
-                      Path(self.CropRawDir).mkdir(exist_ok=True)
-                      Path(self.CropLabelDir).mkdir(exist_ok=True)
-  
-                      count = 0
-                      for i in range(0,X.shape[0]):
-                              image = X[i]
-                              mask = Y[i]
-                              imwrite(self.CropRawDir + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.CropLabelDir + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1
- 
-                      #For validation Data of Stardist
-                      Path(self.CropValRawDir).mkdir(exist_ok=True)
-                      Path(self.CropValLabelDir).mkdir(exist_ok=True)
-                      count = 0
-                      for i in range(0,X_val.shape[0]):
-                              image = X_val[i]
-                              mask = Y_val[i]
-                              imwrite(self.CropValRawDir + str(count) + '.tif', image.astype('float32') )
-                              imwrite(self.CropValLabelDir + str(count) + '.tif', mask.astype('uint16') )
-                              count = count + 1
-                          
 
                               
                               
