@@ -1,6 +1,6 @@
 numpy
 pandas
-napari==0.4.3
+napari
 pyqt5
 natsort
 scikit-image
@@ -8,3 +8,5 @@ scipy
 opencv-python-headless
 tifffile
 matplotlib
+csbdeep
+stardist

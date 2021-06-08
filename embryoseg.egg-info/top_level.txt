@@ -1,4 +1,1 @@
 embryoseg
-embryoseg/models
-embryoseg/notebooks
-embryoseg/utils
