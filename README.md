@@ -1,5 +1,5 @@
 # EmbryoSeg
-Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
+Segmentation tool for multiple touching mouse embryo cells 
 
 
 
@@ -17,7 +17,7 @@ If you are building this from the source, clone the repository and install via
 ```bash
 git clone https://github.com/kapoorlab/embryoseg/
 
-cd vollseg
+cd embryoseg
 
 pip install --user -e .
 
@@ -37,7 +37,7 @@ pip install --user pipenv
 
 # clone the repository and sync the dependencies
 git clone https://github.com/kapoorlab/embryoseg/
-cd vollseg
+cd embryoseg
 pipenv sync
 
 # make the current package available
