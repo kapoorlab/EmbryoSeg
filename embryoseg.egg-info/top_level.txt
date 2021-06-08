@@ -1,2 +1,4 @@
 embryoseg
-notebooks
+embryoseg/models
+embryoseg/notebooks
+embryoseg/utils

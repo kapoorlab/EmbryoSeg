@@ -1,5 +1,5 @@
 # EmbryoSeg
-Segmentation tool for multiple touching animal embryo cells using SmartSeeds
+Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
 
 
 
@@ -8,9 +8,8 @@ Segmentation tool for multiple touching animal embryo cells using SmartSeeds
 
 
 ## Usage
-Check the [Training notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/notebooks/ColabTrainModel.ipynb).
 
-Check the [Prediction notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/notebooks/ColabEmbryoSeg.ipynb).
+Check the [notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main/embryoseg/notebooks/EmbryoSeg.ipynb).
 
 ## Requirements
 
@@ -18,7 +17,7 @@ Check the [Prediction notebook](https://github.com/kapoorlab/EmbryoSeg/blob/main
 
 ## Install
 
-`pip install embryoseg`
+`pip install napatrackmater`
 
 
 
