@@ -5,7 +5,16 @@ embryoseg.egg-info/SOURCES.txt
 embryoseg.egg-info/dependency_links.txt
 embryoseg.egg-info/requires.txt
 embryoseg.egg-info/top_level.txt
+<<<<<<< HEAD
 embryoseg/models/__init__.py
 embryoseg/notebooks/__init__.py
+=======
+embryoseg/sampling/Crops.py
+embryoseg/sampling/Crops2D.py
+embryoseg/sampling/NPZCrops.py
+embryoseg/sampling/__init__.py
+embryoseg/utils/SmartSeeds2D.py
+embryoseg/utils/SmartSeeds3D.py
+>>>>>>> 66610c015a2c23d790167dd23cda7fc6abb9dbaf
 embryoseg/utils/__init__.py
 embryoseg/utils/helpers.py

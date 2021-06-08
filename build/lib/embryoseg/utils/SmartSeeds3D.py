@@ -18,31 +18,18 @@ import numpy as np
 import os
 #from IPython.display import clear_output
 from stardist.models import Config3D, StarDist3D
-from stardist import calculate_extents, Rays_GoldenSpiral
+from stardist import  Rays_GoldenSpiral
 from scipy.ndimage.morphology import binary_fill_holes
-from tqdm import tqdm
 from scipy.ndimage.measurements import find_objects
 from scipy.ndimage.morphology import  binary_dilation
 from csbdeep.utils import normalize
 import glob
 import cv2
-import sys
-from csbdeep.data import RawData, create_patches
 from csbdeep.io import load_training_data
-from csbdeep.utils import axes_dict, axes_check_and_normalize
+from csbdeep.utils import axes_dict
 from csbdeep.models import Config, CARE
-from tifffile import imread, imwrite
-from skimage.morphology import label    
-import warnings
-import collections
-import platform
-import random
-from six.moves import range, zip, map, reduce, filter
-from pathlib import Path
-from csbdeep.data.transform import Transform, permute_axes, broadcast_target   
-from csbdeep.utils import compose
-from csbdeep.io import save_training_data
-from scipy.ndimage.filters import minimum_filter, maximum_filter, median_filter, uniform_filter
+from tifffile import imread
+from six.moves import range, zip
 from tensorflow.keras.utils import Sequence
 
 
@@ -87,11 +74,7 @@ def dilate_label_holes(lbl_img, iterations):
 class SmartSeeds3D(object):
 
 
-
-
-
-
-     def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, TrainUNET = True, TrainSTAR = True, GenerateNPZ = True, GenerateStarNPZ = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
+     def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, TrainUNET = True, TrainSTAR = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
          
          
          
@@ -100,8 +83,6 @@ class SmartSeeds3D(object):
          self.BaseDir = BaseDir
          self.DownsampleFactor = DownsampleFactor
          self.model_dir = model_dir
-         self.GenerateNPZ = GenerateNPZ
-         self.GenerateStarNPZ = GenerateStarNPZ
          self.TrainUNET = TrainUNET
          self.TrainSTAR = TrainSTAR
          self.copy_model_dir = copy_model_dir
@@ -117,10 +98,7 @@ class SmartSeeds3D(object):
          self.batch_size = batch_size
          self.use_gpu = use_gpu
          self.startfilter = startfilter
-         #Attributes to be filled later
          self.n_patches_per_image =  n_patches_per_image
-        
-         
          
          #Load training and validation data
          self.Train()
@@ -146,12 +124,13 @@ class SmartSeeds3D(object):
                         #Read Raw images
                          if self.Normalize == True:
                                  x = ReadFloat(self.files[i]) 
-                                 x = normalize(x,1,99.8,axis= self.axis_norm) 
+                                 x = normalize(x,1,99.8,axis= self.axis_norm)
+                                 x = x[0,:]
                          if self.labelMe == True:
                                  #Read Label images
                                  x = ReadInt(self.files[i])
-                                 x = label(x)
-                   
+                                 x[x==1] = 0              
+                                 x = x[0,:]
                          return x
         
         
@@ -160,85 +139,12 @@ class SmartSeeds3D(object):
      def Train(self):
          
                     
-                    Raw = sorted(glob.glob(self.BaseDir + '/Raw/' + '*.tif'))
-                    Path(self.BaseDir + '/BinaryMask/').mkdir(exist_ok=True)
-                    Path(self.BaseDir + '/RealMask/').mkdir(exist_ok=True)
-                    RealMask = sorted(glob.glob(self.BaseDir + '/RealMask/' + '*.tif'))
-                    
-                    ValRaw = sorted(glob.glob(self.BaseDir + '/ValRaw/' + '*.tif'))
-                    ValRealMask = sorted(glob.glob(self.BaseDir + '/ValRealMask/' + '*.tif'))
-                    
-                    print('Instance segmentation masks:', len(RealMask))
-                    if len(RealMask)== 0:
-                        
-                        print('Making labels')
-                        Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
-                        
-                        for fname in Mask:
-                    
-                           image = imread(fname)
-                    
-                           Name = os.path.basename(os.path.splitext(fname)[0])
-                    
-                           Binaryimage = label(image) 
-                    
-                           imwrite((self.BaseDir + '/RealMask/' + Name + '.tif'), Binaryimage.astype('uint16'))
-                           
-                
-                    Mask = sorted(glob.glob(self.BaseDir + '/BinaryMask/' + '*.tif'))
-                    print('Semantic segmentation masks:', len(Mask))
-                    if len(Mask) == 0:
-                        print('Generating Binary images')
-               
-                               
-                        RealfilesMask = sorted(glob.glob(self.BaseDir + '/RealMask/'+ '*tif'))  
-                
-                
-                        for fname in RealfilesMask:
-                    
-                            image = ReadFloat(fname)
-                    
-                            Name = os.path.basename(os.path.splitext(fname)[0])
-                            
-                            image = minimum_filter(image, (1,4,4))
-                            image = maximum_filter(image, (1,4,4))
-                       
-                            Binaryimage = image > 0
-                    
-                            imwrite((self.BaseDir + '/BinaryMask/' + Name + '.tif'), Binaryimage.astype('uint16'))
-                    
+                    CropRaw = sorted(glob.glob(self.BaseDir + '/CropRaw/' + '*.tif'))
+                    CropRealMask = sorted(glob.glob(self.BaseDir + '/CropRealMask/' + '*.tif'))
+                    CropValRaw = sorted(glob.glob(self.BaseDir + '/CropValRaw/' + '*.tif'))
+                    CropValRealMask = sorted(glob.glob(self.BaseDir + '/CropValRealMask/' + '*.tif'))
+  
                    
-                    if self.GenerateNPZ:
-                        
-                      raw_data = RawData.from_folder (
-                      basepath    = self.BaseDir,
-                      source_dirs = ['Raw/'],
-                      target_dir  = 'BinaryMask/',
-                      axes        = 'ZYX',
-                       )
-                    
-                      X, Y, XY_axes = create_patches (
-                      raw_data            = raw_data,
-                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
-                      n_patches_per_image = self.n_patches_per_image,
-                      save_file           = self.BaseDir + self.NPZfilename + '.npz',
-                      )
-                      
-                    if self.GenerateStarNPZ:
-                        
-                      raw_data = RawData.from_folder (
-                      basepath    = self.BaseDir,
-                      source_dirs = ['Raw/'],
-                      target_dir  = 'RealMask/',
-                      axes        = 'ZYX',
-                       )
-                    
-                      X, Y, XY_axes = create_patches (
-                      raw_data            = raw_data,
-                      patch_size          = (self.PatchZ,self.PatchY,self.PatchX),
-                      n_patches_per_image = self.n_patches_per_image,
-                      save_file           = self.BaseDir + self.NPZfilename + 'Star' + '.npz',
-                      )  
                     
                     # Training UNET model
                     if self.TrainUNET:
@@ -254,9 +160,6 @@ class SmartSeeds3D(object):
                             vars(config)
                             
                             model = CARE(config , name = 'UNET' + self.model_name, basedir = self.model_dir)
-                            
-                            
-                                                     
                                  
                             if self.copy_model_dir is not None:   
                               if os.path.exists(self.copy_model_dir + 'UNET' + self.copy_model_name + '/' + 'weights_now.h5') and os.path.exists(self.model_dir + 'UNET' + self.model_name + '/' + 'weights_now.h5') == False:
@@ -281,12 +184,15 @@ class SmartSeeds3D(object):
                             print('Training StarDistModel model with unet backbone')
                             self.axis_norm = (0,1,2)
                             
-                            self.X_trn = self.DataSequencer(Raw, self.axis_norm, Normalize = True, labelMe = False)
-                            self.Y_trn = self.DataSequencer(RealMask, self.axis_norm, Normalize = False, labelMe = True)
                             
-                            self.X_val = self.DataSequencer(ValRaw, self.axis_norm, Normalize = True, labelMe = False)
-                            self.Y_val = self.DataSequencer(ValRealMask, self.axis_norm, Normalize = False, labelMe = True)
+                            self.X_trn = self.DataSequencer(CropRaw, self.axis_norm, Normalize = True, labelMe = False)
+                            self.Y_trn = self.DataSequencer(CropRealMask, self.axis_norm, Normalize = False, labelMe = True)
                             
+                            self.X_val = self.DataSequencer(CropValRaw, self.axis_norm, Normalize = True, labelMe = False)
+                            self.Y_val = self.DataSequencer(CropValRealMask, self.axis_norm, Normalize = False, labelMe = True)
+                           
+                            
+                          
                             print(Config3D.__doc__)
                             
                             anisotropy = (1,1,1)
@@ -303,7 +209,7 @@ class SmartSeeds3D(object):
                                   train_patch_size = (self.PatchZ, self.PatchX, self.PatchY ),
                                   train_batch_size = self.batch_size,
                                   unet_n_filter_base = self.startfilter,
-                                  train_dist_loss = 'mae',
+                                  train_dist_loss = 'mse',
                                   grid         = (1,4,4),
                                   use_gpu      = self.use_gpu,
                                   n_channel_in = 1,
