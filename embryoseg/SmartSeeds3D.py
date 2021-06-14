@@ -79,15 +79,11 @@ def dilate_label_holes(lbl_img, iterations):
 class SmartSeeds3D(object):
 
 
-<<<<<<< HEAD:embryoseg/SmartSeeds3D.py
 
 
 
      def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, backbone = 'resnet', CroppedLoad = False, TrainUNET = True, TrainSTAR = True, GenerateNPZ = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
 
-=======
-     def __init__(self, BaseDir, NPZfilename, model_name, model_dir, n_patches_per_image, DownsampleFactor = 1, TrainUNET = True, TrainSTAR = True,  copy_model_dir = None, PatchX=256, PatchY=256, PatchZ = 16,  use_gpu = True,  batch_size = 4, depth = 3, kern_size = 3, startfilter = 48, n_rays = 16, epochs = 400, learning_rate = 0.0001):
->>>>>>> 66610c015a2c23d790167dd23cda7fc6abb9dbaf:embryoseg/utils/SmartSeeds3D.py
          
          
          
@@ -96,11 +92,8 @@ class SmartSeeds3D(object):
          self.BaseDir = BaseDir
          self.DownsampleFactor = DownsampleFactor
          self.model_dir = model_dir
-<<<<<<< HEAD:embryoseg/SmartSeeds3D.py
          self.backbone = backbone
          self.GenerateNPZ = GenerateNPZ
-=======
->>>>>>> 66610c015a2c23d790167dd23cda7fc6abb9dbaf:embryoseg/utils/SmartSeeds3D.py
          self.TrainUNET = TrainUNET
          self.TrainSTAR = TrainSTAR
          self.copy_model_dir = copy_model_dir
@@ -117,11 +110,7 @@ class SmartSeeds3D(object):
          self.use_gpu = use_gpu
          self.startfilter = startfilter
          self.n_patches_per_image =  n_patches_per_image
-<<<<<<< HEAD:embryoseg/SmartSeeds3D.py
          self.CroppedLoad = CroppedLoad
-=======
-         
->>>>>>> 66610c015a2c23d790167dd23cda7fc6abb9dbaf:embryoseg/utils/SmartSeeds3D.py
          #Load training and validation data
          self.Train()
          
@@ -158,7 +147,6 @@ class SmartSeeds3D(object):
          
      def Train(self):
          
-<<<<<<< HEAD:embryoseg/SmartSeeds3D.py
          
          
 
@@ -226,15 +214,6 @@ class SmartSeeds3D(object):
                       save_file           = self.BaseDir + self.NPZfilename + '.npz',
                       )        
                             
-=======
-                    
-                    CropRaw = sorted(glob.glob(self.BaseDir + '/CropRaw/' + '*.tif'))
-                    CropRealMask = sorted(glob.glob(self.BaseDir + '/CropRealMask/' + '*.tif'))
-                    CropValRaw = sorted(glob.glob(self.BaseDir + '/CropValRaw/' + '*.tif'))
-                    CropValRealMask = sorted(glob.glob(self.BaseDir + '/CropValRealMask/' + '*.tif'))
-  
-                   
->>>>>>> 66610c015a2c23d790167dd23cda7fc6abb9dbaf:embryoseg/utils/SmartSeeds3D.py
                     
                     # Training UNET model
                     if self.TrainUNET:
