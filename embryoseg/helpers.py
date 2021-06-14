@@ -232,7 +232,7 @@ def UNETPrediction3D(image, model, n_tiles, axis):
     Finalimage = label(Filled)
     Finalimage = fill_label_holes(Finalimage)
     Finalimage = relabel_sequential(Finalimage)[0]
-    Finalimage = expand_labels(Finalimage,2)
+    Finalimage = expand_labels(Finalimage,4)
           
     return Finalimage
 
@@ -281,7 +281,7 @@ def STARPrediction3D(image, model, n_tiles, MaskImage = None, smartcorrection = 
           
     Watershed, Markers = WatershedwithMask3D(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid )
     Watershed = fill_label_holes(Watershed.astype('uint16'))
-    Watershed = expand_labels(Watershed,2)
+    Watershed = expand_labels(Watershed,4)
        
        
 

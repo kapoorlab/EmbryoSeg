@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: embryoseg
-Version: 2.2.4
+Version: 2.2.5
 Summary: SmartSeed Segmentation for animal embryonic cells.
 Home-page: https://github.com/kapoorlab/EmbryoSeg/
 Author: Varun Kapoor Leo Guginard
@@ -17,7 +17,7 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 
 # EmbryoSeg
-Segmentation tool for multiple touching mouse embryo cells using SmartSeeds
+Segmentation tool for multiple touching mouse embryo cells 
 
 
 
@@ -35,7 +35,7 @@ If you are building this from the source, clone the repository and install via
 ```bash
 git clone https://github.com/kapoorlab/embryoseg/
 
-cd vollseg
+cd embryoseg
 
 pip install --user -e .
 
@@ -55,7 +55,7 @@ pip install --user pipenv
 
 # clone the repository and sync the dependencies
 git clone https://github.com/kapoorlab/embryoseg/
-cd vollseg
+cd embryoseg
 pipenv sync
 
 # make the current package available
