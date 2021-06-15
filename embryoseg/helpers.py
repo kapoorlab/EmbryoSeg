@@ -34,7 +34,7 @@ from skimage.measure import label
 from csbdeep.utils import normalize
 from skimage import filters
 from skimage.util import random_noise
-from scipy.ndimage import distance_transform_edt
+
 
 globalthreshold = 0.01
 def SimplePrediction(x, UnetModel, StarModel, n_tiles = (2,2), UseProbability = True, min_size = 20):
@@ -53,6 +53,15 @@ def SimplePrediction(x, UnetModel, StarModel, n_tiles = (2,2), UseProbability = 
                 
                       return SmartSeeds
 
+def crappify_flou_G_P(x, y, mu, sigma, savedirx, savediry, name):
+    x = x.astype('float32')
+    gaussiannoise = np.random.normal(mu, sigma*0.05, x.shape)
+    x = x + gaussiannoise 
+        
+    #add noise to original image
+    imwrite(savedirx + '/' + name + 'pg' + str(mu) + str(sigma) + '.tif', x.astype('float32'))    
+    #keep the label the same
+    imwrite(savediry + '/' + name + 'pg' + str(mu) + str(sigma) + '.tif', y.astype('uint16'))     
 
 
 def _fill_label_holes(lbl_img, **kwargs):
@@ -110,7 +119,29 @@ def remove_big_objects(ar, max_size=6400, connectivity=1, in_place=False):
 
     return out
 
-
+def multiplotline(plotA, plotB, plotC, titleA, titleB, titleC, targetdir = None, File = None, plotTitle = None):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 6))
+    ax = axes.ravel()
+    ax[0].plot(plotA)
+    ax[0].set_title(titleA)
+   
+    ax[1].plot(plotB)
+    ax[1].set_title(titleB)
+    
+    ax[2].plot(plotC)
+    ax[2].set_title(titleC)
+    
+    plt.tight_layout()
+    
+    if plotTitle is not None:
+      Title = plotTitle
+    else :
+      Title = 'MultiPlot'   
+    if targetdir is not None and File is not None:
+      plt.savefig(targetdir + Title + File + '.png')
+    if targetdir is not None and File is None:
+      plt.savefig(targetdir + Title + File + '.png')
+    plt.show()
 
 
 
@@ -174,7 +205,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
         Mask[i,:] = remove_small_objects(Mask[i,:].astype('uint16'), min_size = min_size)
     
     SizedMask[:, :Mask.shape[1], :Mask.shape[2]] = Mask
-    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16')) 
+    
 
     SmartSeeds, _, StarImage = STARPrediction3D(gaussian_filter(image,filtersize), StarModel,  n_tiles, MaskImage = Mask, UseProbability = UseProbability, smartcorrection = smartcorrection)
     #Upsample images back to original size
@@ -186,7 +217,7 @@ n_tiles = (1,2,2), doMask = True, smartcorrection = None, threshold = 20, projec
             
     imwrite((StarDistResults + Name+ '.tif' ) , StarImage.astype('uint16'))
     imwrite((SmartSeedsResults + Name+ '.tif' ) , SizedSmartSeeds.astype('uint16'))
-    
+    imwrite((UNETResults + Name+ '.tif' ) , SizedMask.astype('uint16')) 
     
         
     return SizedSmartSeeds, SizedMask    
@@ -232,7 +263,7 @@ def UNETPrediction3D(image, model, n_tiles, axis):
     Finalimage = label(Filled)
     Finalimage = fill_label_holes(Finalimage)
     Finalimage = relabel_sequential(Finalimage)[0]
-    Finalimage = expand_labels(Finalimage,4)
+    
           
     return Finalimage
 
@@ -256,6 +287,8 @@ def STARPrediction3D(image, model, n_tiles, MaskImage = None, smartcorrection = 
 
     MidImage, details = model.predict_instances(image, n_tiles = n_tiles)
     SmallProbability, SmallDistance = model.predict(image, n_tiles = n_tiles)
+
+
 
     StarImage = MidImage[:image.shape[0],:shape[0],:shape[1]]
     SmallDistance = MaxProjectDist(SmallDistance, axis=-1)
@@ -281,7 +314,7 @@ def STARPrediction3D(image, model, n_tiles, MaskImage = None, smartcorrection = 
           
     Watershed, Markers = WatershedwithMask3D(MaxProjectDistance.astype('uint16'), StarImage.astype('uint16'), MaskImage.astype('uint16'), grid )
     Watershed = fill_label_holes(Watershed.astype('uint16'))
-    Watershed = expand_labels(Watershed,4)
+  
        
        
 
@@ -306,8 +339,30 @@ def VetoRegions(Image, Zratio = 3):
     return Image
     
 
-   
+#Default method that works well with cells which are below a certain shape and do not have weak edges
     
+def iou3D(boxA, centroid):
+    
+    ndim = len(centroid)
+    inside = False
+    
+    Condition = [Conditioncheck(centroid, boxA, p, ndim) for p in range(0,ndim)]
+        
+    inside = all(Condition)
+    
+    return inside
+
+def Conditioncheck(centroid, boxA, p, ndim):
+    
+      condition = False
+    
+      if centroid[p] >= boxA[p] and centroid[p] <= boxA[p + ndim]:
+          
+           condition = True
+           
+      return condition     
+    
+
 def WatershedwithMask3D(Image, Label,mask, grid): 
     properties = measure.regionprops(Label, Image) 
     binaryproperties = measure.regionprops(label(mask), Image) 
@@ -346,84 +401,6 @@ def WatershedwithMask3D(Image, Label,mask, grid):
     return watershedImage, markers
 
 
-def expand_labels(label_image, distance=1):
-    """Expand labels in label image by ``distance`` pixels without overlapping.
-    Given a label image, ``expand_labels`` grows label regions (connected components)
-    outwards by up to ``distance`` pixels without overflowing into neighboring regions.
-    More specifically, each background pixel that is within Euclidean distance
-    of <= ``distance`` pixels of a connected component is assigned the label of that
-    connected component.
-    Where multiple connected components are within ``distance`` pixels of a background
-    pixel, the label value of the closest connected component will be assigned (see
-    Notes for the case of multiple labels at equal distance).
-    Parameters
-    ----------
-    label_image : ndarray of dtype int
-        label image
-    distance : float
-        Euclidean distance in pixels by which to grow the labels. Default is one.
-    Returns
-    -------
-    enlarged_labels : ndarray of dtype int
-        Labeled array, where all connected regions have been enlarged
-    Notes
-    -----
-    Where labels are spaced more than ``distance`` pixels are apart, this is
-    equivalent to a morphological dilation with a disc or hyperball of radius ``distance``.
-    However, in contrast to a morphological dilation, ``expand_labels`` will
-    not expand a label region into a neighboring region.  
-    This implementation of ``expand_labels`` is derived from CellProfiler [1]_, where
-    it is known as module "IdentifySecondaryObjects (Distance-N)" [2]_.
-    There is an important edge case when a pixel has the same distance to
-    multiple regions, as it is not defined which region expands into that
-    space. Here, the exact behavior depends on the upstream implementation
-    of ``scipy.ndimage.distance_transform_edt``.
-    See Also
-    --------
-    :func:`skimage.measure.label`, :func:`skimage.segmentation.watershed`, :func:`skimage.morphology.dilation`
-    References
-    ----------
-    .. [1] https://cellprofiler.org
-    .. [2] https://github.com/CellProfiler/CellProfiler/blob/082930ea95add7b72243a4fa3d39ae5145995e9c/cellprofiler/modules/identifysecondaryobjects.py#L559
-    Examples
-    --------
-    >>> labels = np.array([0, 1, 0, 0, 0, 0, 2])
-    >>> expand_labels(labels, distance=1)
-    array([1, 1, 1, 0, 0, 2, 2])
-    Labels will not overwrite each other:
-    >>> expand_labels(labels, distance=3)
-    array([1, 1, 1, 1, 2, 2, 2])
-    In case of ties, behavior is undefined, but currently resolves to the
-    label closest to ``(0,) * ndim`` in lexicographical order.
-    >>> labels_tied = np.array([0, 1, 0, 2, 0])
-    >>> expand_labels(labels_tied, 1)
-    array([1, 1, 1, 2, 2])
-    >>> labels2d = np.array(
-    ...     [[0, 1, 0, 0],
-    ...      [2, 0, 0, 0],
-    ...      [0, 3, 0, 0]]
-    ... )
-    >>> expand_labels(labels2d, 1)
-    array([[2, 1, 1, 0],
-           [2, 2, 0, 0],
-           [2, 3, 3, 0]])
-    """
-
-    distances, nearest_label_coords = distance_transform_edt(
-        label_image == 0, return_indices=True
-    )
-    labels_out = np.zeros_like(label_image)
-    dilate_mask = distances <= distance
-    # build the coordinates to find nearest labels,
-    # in contrast to [1] this implementation supports label arrays
-    # of any dimension
-    masked_nearest_label_coords = [
-        dimension_indices[dilate_mask]
-        for dimension_indices in nearest_label_coords
-    ]
-    nearest_labels = label_image[tuple(masked_nearest_label_coords)]
-    labels_out[dilate_mask] = nearest_labels
-    return labels_out
 
 
     
@@ -459,7 +436,28 @@ def zero_pad(image, PadX, PadY):
           return extendimage 
     
         
+def zero_pad_color(image, PadX, PadY):
+
+          sizeY = image.shape[1]
+          sizeX = image.shape[0]
+          color = image.shape[2]  
+          
+          sizeXextend = sizeX
+          sizeYextend = sizeY
+         
  
+          while sizeXextend%PadX!=0:
+              sizeXextend = sizeXextend + 1
+        
+          while sizeYextend%PadY!=0:
+              sizeYextend = sizeYextend + 1
+
+          extendimage = np.zeros([sizeXextend, sizeYextend, color])
+          
+          extendimage[0:sizeX, 0:sizeY, 0:color] = image
+              
+              
+          return extendimage      
     
 def zero_pad_time(image, PadX, PadY):
 
@@ -775,4 +773,3 @@ def axes_dict(axes):
     axes, allowed = axes_check_and_normalize(axes,return_allowed=True)
     return { a: None if axes.find(a) == -1 else axes.find(a) for a in allowed }
     # return collections.namedt     
-    
